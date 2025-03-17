@@ -1,0 +1,2 @@
+ethereum:
+  node_url: "https://ethereum.blockpi.network/v1/rpc/public" 
