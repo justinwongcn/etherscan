@@ -33,4 +33,10 @@ func main() {
 	}
 
 	fmt.Printf("最新区块高度: %d\n", blockNumber)
-} 
+
+	balance, err := client.GetBalance(ctx, "0x539C010dBe6AC6E34C8937CB0A35130eDDDb2693", "latest")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("账户余额: %d\n", balance)
+}

@@ -2,8 +2,9 @@ package ethereum
 
 import (
 	"context"
+	"github.com/justinwongcn/go-ethlibs/eth"
 
-	"github.com/INFURA/go-ethlibs/node"
+	"github.com/justinwongcn/go-ethlibs/node"
 )
 
 // Client 封装以太坊客户端
@@ -57,5 +58,11 @@ func (c *Client) GetLatestBlockNumber(ctx context.Context) (uint64, error) {
 // Returns:
 //   - uint64: 账户余额（单位：wei）
 //   - error: 操作过程中可能发生的错误
-//func (c *Client) GetBalance(ctx context.Context, address string, blockNumber string) (uint64, error) {
-//}
+func (c *Client) GetBalance(ctx context.Context, address string, numberOrTag string) (uint64, error) {
+	addr, err := eth.NewAddress(address)
+	if err != nil {
+		return 0, err
+	}
+	numOrTag := eth.MustBlockNumberOrTag(numberOrTag)
+	return c.nodeClient.GetBalance(ctx, *addr, *numOrTag)
+}
