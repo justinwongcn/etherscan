@@ -24,18 +24,6 @@ go.work.sum
 # env file
 .env
 
-
-# 常见的其他需要忽略的文件
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-*.test
-*.out
+# IDE specific files
 .idea/
 .vscode/
-.DS_Store
-
-# Go specific
-/vendor/
