@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"path/filepath"
+	"time"
 
 	"github.com/justinwongcn/etherscan/config"
 	"github.com/justinwongcn/etherscan/internal/ethereum"
@@ -21,7 +22,13 @@ func main() {
 	ctx := context.Background()
 
 	// 创建客户端实例
-	client, err := ethereum.NewClient(ctx, cfg.Ethereum.NodeURL)
+	opts := &ethereum.ClientOptions{
+		MaxConns:     50,         // 设置最大连接数
+		IdleTimeout:  time.Minute, // 设置空闲超时时间
+		HealthCheck:  true,        // 启用健康检查
+		MaxIdleConns: 5,          // 设置最大空闲连接数
+	}
+	client, err := ethereum.NewClient(ctx, cfg.Ethereum.NodeURL, opts)
 	if err != nil {
 		panic(err)
 	}
