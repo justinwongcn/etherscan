@@ -27,4 +27,4 @@ func LoadConfig(filename string) (*Config, error) {
 	}
 
 	return config, nil
-} 
+}
