@@ -69,4 +69,21 @@ func main() {
 	for addr, bal := range balances {
 		fmt.Printf("地址 %s 的余额: %d\n", addr, bal)
 	}
+
+	address := "0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5"
+	
+	// 获取最新区块的交易数量
+	txCount, err := client.GetTransactionCount(ctx, address, "latest")
+	if err != nil {
+		panic(err)
+	}
+	fmt.Printf("地址 %s 在最新区块的交易数量: %d\n", address, txCount)
+
+	// 获取指定区块高度的交易数量
+	// blockNum := fmt.Sprintf("0x%x", 22095087)
+	// txCountAtBlock, err := client.GetTransactionCount(ctx, address, blockNum)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// fmt.Printf("地址 %s 在区块 %s 的交易数量: %d\n", address, blockNum, txCountAtBlock)
 }
