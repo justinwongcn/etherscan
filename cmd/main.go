@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
+	// "github.com/ethereum/go-ethereum/common/hexutil"
+	// "github.com/ethereum/go-ethereum/crypto"
 	"github.com/justinwongcn/etherscan/config"
 	"github.com/justinwongcn/etherscan/internal/ethereum"
 )
@@ -23,10 +25,10 @@ func main() {
 
 	// 创建客户端实例
 	opts := &ethereum.ClientOptions{
-		MaxConns:     50,         // 设置最大连接数
+		MaxConns:     50,          // 设置最大连接数
 		IdleTimeout:  time.Minute, // 设置空闲超时时间
 		HealthCheck:  true,        // 启用健康检查
-		MaxIdleConns: 5,          // 设置最大空闲连接数
+		MaxIdleConns: 5,           // 设置最大空闲连接数
 	}
 	client, err := ethereum.NewClient(ctx, cfg.Ethereum.NodeURL, opts)
 	if err != nil {
@@ -71,7 +73,7 @@ func main() {
 	}
 
 	address := "0x95222290DD7278Aa3Ddd389Cc1E1d165CC4BAfe5"
-	
+
 	// 获取最新区块的交易数量
 	txCount, err := client.GetTransactionCount(ctx, address, "latest")
 	if err != nil {
@@ -86,4 +88,20 @@ func main() {
 	// 	panic(err)
 	// }
 	// fmt.Printf("地址 %s 在区块 %s 的交易数量: %d\n", address, blockNum, txCountAtBlock)
+
+	// 获取指定区块号的交易数量
+	// blockNum := fmt.Sprintf("0x%x", 22115865)
+	// txCountByNumber, err := client.GetBlockTransactionCountByNumber(ctx, blockNum)
+	// if err != nil {
+	//     panic(err)
+	// }
+	// fmt.Printf("区块 %s 的交易数量: %d\n", blockNum, txCountByNumber)
+
+	// 获取指定区块哈希的交易数量
+	// blockHash := "0xc6fe56ed79afaf8330ec42e8b725bdbae4bea29a043bd34c469e50de51a83b3d"
+	// txCountByHash, err := client.GetBlockTransactionCountByHash(ctx, blockHash)
+	// if err != nil {
+	//     panic(err)
+	// }
+	// fmt.Printf("区块哈希 %s 的交易数量: %d\n", blockHash, txCountByHash)
 }

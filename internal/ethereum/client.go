@@ -105,6 +105,16 @@ func (c *Client) GasPrice(ctx context.Context) (uint64, error) {
 	return result.(uint64), nil
 }
 
+// GetLatestBlockNumber 获取最新区块高度
+//
+// Parameters:
+//   - ctx: context.Context 用于控制请求的上下文
+//
+// Returns:
+//   - uint64: 最新区块高度
+//   - error: 可能的错误：
+//   - 节点连接错误
+//   - 请求执行错误
 func (c *Client) GetLatestBlockNumber(ctx context.Context) (uint64, error) {
 	result, err := c.withConnection(ctx, func(conn node.Client) (any, error) {
 		return conn.BlockNumber(ctx)
@@ -115,6 +125,42 @@ func (c *Client) GetLatestBlockNumber(ctx context.Context) (uint64, error) {
 	return result.(uint64), nil
 }
 
+// getDefaultNumberOrTag 处理区块号或标签的默认值
+//
+// Parameters:
+//   - numberOrTag: string 区块号或标签，可以是以下格式：
+//   - 十六进制字符串（如"0x1"）表示具体区块号
+//   - "latest" - 最新区块
+//   - "earliest" - 创世区块
+//   - "pending" - 待处理区块
+//   - 空字符串 - 将被转换为"latest"
+//
+// Returns:
+//   - string: 处理后的区块号或标签
+func getDefaultNumberOrTag(numberOrTag string) string {
+	if numberOrTag == "" {
+		return "latest"
+	}
+	return numberOrTag
+}
+
+// GetBalance 获取指定地址的账户余额
+//
+// Parameters:
+//   - ctx: context.Context 用于控制请求的上下文
+//   - address: string 要查询的账户地址
+//   - numberOrTag: string 区块号，可以是以下格式：
+//   - 十六进制字符串（如"0x1"）表示具体区块号
+//   - "latest" - 最新区块（默认）
+//   - "earliest" - 创世区块
+//   - "pending" - 待处理区块
+//
+// Returns:
+//   - uint64: 账户余额（单位：wei）
+//   - error: 可能的错误：
+//   - 无效的地址格式
+//   - 无效的区块号格式
+//   - 节点连接错误
 func (c *Client) GetBalance(ctx context.Context, address string, numberOrTag string) (uint64, error) {
 	// 验证并转换地址格式
 	addr, err := eth.NewAddress(address)
@@ -122,8 +168,8 @@ func (c *Client) GetBalance(ctx context.Context, address string, numberOrTag str
 		return 0, fmt.Errorf("invalid ethereum address: %v", err)
 	}
 
-	// 验证并转换区块号格式
-	numOrTag := eth.MustBlockNumberOrTag(numberOrTag)
+	// 处理默认值并验证区块号格式
+	numOrTag := eth.MustBlockNumberOrTag(getDefaultNumberOrTag(numberOrTag))
 	if numOrTag == nil {
 		return 0, fmt.Errorf("invalid block number or tag: %s", numberOrTag)
 	}
@@ -175,7 +221,7 @@ func (c *Client) GetBalances(ctx context.Context, addresses []string, numberOrTa
 	}
 
 	// 验证并转换区块号格式
-	numOrTag := eth.MustBlockNumberOrTag(numberOrTag)
+	numOrTag := eth.MustBlockNumberOrTag(getDefaultNumberOrTag(numberOrTag))
 	if numOrTag == nil {
 		return nil, fmt.Errorf("invalid block number or tag: %s", numberOrTag)
 	}
@@ -251,7 +297,7 @@ func (c *Client) GetTransactionCount(ctx context.Context, address string, number
 	}
 
 	// 验证并转换区块号格式
-	numOrTag := eth.MustBlockNumberOrTag(numberOrTag)
+	numOrTag := eth.MustBlockNumberOrTag(getDefaultNumberOrTag(numberOrTag))
 	if numOrTag == nil {
 		return 0, fmt.Errorf("invalid block number or tag: %s", numberOrTag)
 	}
@@ -264,4 +310,189 @@ func (c *Client) GetTransactionCount(ctx context.Context, address string, number
 		return 0, err
 	}
 	return result.(uint64), nil
+}
+
+// GetBlockTransactionCountByHash 获取指定区块哈希的交易数量
+//
+// Parameters:
+//   - ctx: context.Context 用于控制请求的上下文
+//   - blockHash: string 区块哈希（32字节的十六进制字符串）
+//
+// Returns:
+//   - uint64: 该区块中的交易数量
+//   - error: 可能的错误：
+//   - 无效的区块哈希格式
+//   - 节点连接错误
+func (c *Client) GetBlockTransactionCountByHash(ctx context.Context, blockHash string) (uint64, error) {
+	result, err := c.withConnection(ctx, func(conn node.Client) (any, error) {
+		return conn.GetBlockTransactionCountByHash(ctx, blockHash)
+	})
+	if err != nil {
+		return 0, err
+	}
+	return result.(uint64), nil
+}
+
+// GetBlockTransactionCountByNumber 获取指定区块号的交易数量
+//
+// Parameters:
+//   - ctx: context.Context 用于控制请求的上下文
+//   - numberOrTag: string 区块号，可以是以下格式：
+//   - 十六进制字符串（如"0x1"）表示具体区块号
+//   - "latest" - 最新区块（默认）
+//   - "earliest" - 创世区块
+//   - "pending" - 待处理区块
+//
+// Returns:
+//   - uint64: 该区块中的交易数量
+//   - error: 可能的错误：
+//   - 无效的区块号格式
+//   - 节点连接错误
+func (c *Client) GetBlockTransactionCountByNumber(ctx context.Context, numberOrTag string) (uint64, error) {
+	// 处理默认值并验证区块号格式
+	numOrTag := eth.MustBlockNumberOrTag(getDefaultNumberOrTag(numberOrTag))
+	if numOrTag == nil {
+		return 0, fmt.Errorf("invalid block number or tag: %s", numberOrTag)
+	}
+
+	// 使用通用的连接池辅助函数执行操作
+	result, err := c.withConnection(ctx, func(conn node.Client) (any, error) {
+		return conn.GetBlockTransactionCountByNumber(ctx, *numOrTag)
+	})
+	if err != nil {
+		return 0, err
+	}
+	return result.(uint64), nil
+}
+
+// GetCode 获取指定地址的合约代码
+//
+// Parameters:
+//   - ctx: context.Context 用于控制请求的上下文
+//   - address: string 要查询的合约地址
+//   - numberOrTag: string 区块号，可以是以下格式：
+//   - 十六进制字符串（如"0x1"）表示具体区块号
+//   - "latest" - 最新区块（默认）
+//   - "earliest" - 创世区块
+//   - "pending" - 待处理区块
+//
+// Returns:
+//   - string: 合约代码（十六进制格式）
+//   - error: 可能的错误：
+//   - 无效的地址格式
+//   - 无效的区块号格式
+//   - 节点连接错误
+func (c *Client) GetCode(ctx context.Context, address string, numberOrTag string) (string, error) {
+	// 验证并转换地址格式
+	addr, err := eth.NewAddress(address)
+	if err != nil {
+		return "", fmt.Errorf("invalid ethereum address: %v", err)
+	}
+
+	// 处理默认值并验证区块号格式
+	numOrTag := eth.MustBlockNumberOrTag(getDefaultNumberOrTag(numberOrTag))
+	if numOrTag == nil {
+		return "", fmt.Errorf("invalid block number or tag: %s", numberOrTag)
+	}
+
+	// 使用通用的连接池辅助函数执行操作
+	result, err := c.withConnection(ctx, func(conn node.Client) (any, error) {
+		return conn.GetCode(ctx, *addr, *numOrTag)
+	})
+	if err != nil {
+		return "", err
+	}
+	return result.(string), nil
+}
+
+// SendRawTransaction 发送已签名的交易数据
+//
+// Parameters:
+//   - ctx: context.Context 用于控制请求的上下文
+//   - signedTxData: string 已签名的交易数据（十六进制格式）
+//
+// Returns:
+//   - string: 交易哈希（32字节的十六进制字符串）
+//   - error: 可能的错误：
+//   - 无效的交易数据格式
+//   - 节点连接错误
+func (c *Client) SendRawTransaction(ctx context.Context, signedTxData string) (string, error) {
+	// 验证交易数据格式
+	if len(signedTxData) < 2 || signedTxData[:2] != "0x" {
+		return "", fmt.Errorf("invalid transaction data format: must be hex string starting with 0x")
+	}
+
+	// 使用通用的连接池辅助函数执行操作
+	result, err := c.withConnection(ctx, func(conn node.Client) (any, error) {
+		return conn.SendRawTransaction(ctx, signedTxData)
+	})
+	if err != nil {
+		return "", err
+	}
+	return result.(string), nil
+}
+
+// Call 执行以太坊智能合约的只读调用
+//
+// Parameters:
+//   - ctx: context.Context 用于控制请求的上下文
+//   - from: string 可选，交易发送方地址
+//   - to: string 必需，交易接收方地址
+//   - gas: uint64 可选，交易执行的gas限制
+//   - gasPrice: uint64 可选，每单位gas的价格
+//   - value: uint64 可选，随交易发送的以太币数量
+//   - data: string 可选，方法签名和编码参数的哈希
+//   - numberOrTag: string 区块号或标签，可以是以下格式：
+//   - 十六进制字符串（如"0x1"）表示具体区块号
+//   - "latest" - 最新区块（默认）
+//   - "earliest" - 创世区块
+//   - "pending" - 待处理区块
+//
+// Returns:
+//   - string: 合约执行的返回值
+//   - error: 可能的错误：
+//   - 无效的地址格式
+//   - 无效的区块号格式
+//   - 节点连接错误
+func (c *Client) Call(ctx context.Context, from, to string, gas, gasPrice, value uint64, data string, numberOrTag string) (string, error) {
+	// 验证接收方地址格式
+	toAddr, err := eth.NewAddress(to)
+	if err != nil {
+		return "", fmt.Errorf("invalid to address: %v", err)
+	}
+
+	// 验证发送方地址格式（如果提供）
+	var fromAddr *eth.Address
+	if from != "" {
+		addr, err := eth.NewAddress(from)
+		if err != nil {
+			return "", fmt.Errorf("invalid from address: %v", err)
+		}
+		fromAddr = addr
+	}
+
+	// 处理默认值并验证区块号格式
+	numOrTag := eth.MustBlockNumberOrTag(getDefaultNumberOrTag(numberOrTag))
+	if numOrTag == nil {
+		return "", fmt.Errorf("invalid block number or tag: %s", numberOrTag)
+	}
+
+	// 创建交易对象
+	tx := eth.Transaction{
+		From:     *fromAddr,
+		To:       toAddr,
+		Gas:      *eth.MustQuantity(fmt.Sprintf("0x%x", gas)),
+		GasPrice: eth.MustQuantity(fmt.Sprintf("0x%x", gasPrice)),
+		Value:    *eth.MustQuantity(fmt.Sprintf("0x%x", value)),
+		Input:    eth.Input(data),
+	}
+
+	// 使用通用的连接池辅助函数执行操作
+	result, err := c.withConnection(ctx, func(conn node.Client) (any, error) {
+		return conn.Call(ctx, tx, *numOrTag)
+	})
+	if err != nil {
+		return "", err
+	}
+	return result.(string), nil
 }
