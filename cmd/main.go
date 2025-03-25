@@ -104,4 +104,90 @@ func main() {
 	//     panic(err)
 	// }
 	// fmt.Printf("区块哈希 %s 的交易数量: %d\n", blockHash, txCountByHash)
+
+	block, err := client.GetBlockByNumber(ctx, "latest", true)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Printf("\n最新区块信息:\n")
+	fmt.Printf("  区块号: %d\n", block.Number)
+	fmt.Printf("  区块哈希: %s\n", block.Hash)
+	fmt.Printf("  父区块哈希: %s\n", block.ParentHash)
+	fmt.Printf("  时间戳: %d\n", block.Timestamp)
+	fmt.Printf("  交易数量: %d\n", len(block.Transactions))
+	fmt.Printf("  Gas 限制: %d\n", block.GasLimit)
+	fmt.Printf("  Gas 使用量: %d\n", block.GasUsed)
+
+	// 通过区块哈希获取区块信息
+	// blockHash := "0x1e9f9b71ea85e1037dd14438714b74fe8c36c93b6b334336aa0708ffbb4c206c"
+	// blockByHash, err := client.GetBlockByHash(ctx, blockHash, true)
+	// if err != nil {
+	// 	fmt.Printf("获取区块哈希 %s 的信息时出错: %v\n", blockHash, err)
+	// 	fmt.Println("注意: 某些节点可能不提供历史区块的完整信息，需要使用归档节点")
+	// } else {
+	// 	fmt.Printf("\n指定哈希的区块信息:\n")
+	// 	fmt.Printf("  区块号: %d\n", blockByHash.Number)
+	// 	fmt.Printf("  区块哈希: %s\n", blockByHash.Hash)
+	// 	fmt.Printf("  父区块哈希: %s\n", blockByHash.ParentHash)
+	// 	fmt.Printf("  时间戳: %d\n", blockByHash.Timestamp)
+	// 	fmt.Printf("  交易数量: %d\n", len(blockByHash.Transactions))
+	// 	fmt.Printf("  Gas 限制: %d\n", blockByHash.GasLimit)
+	// 	fmt.Printf("  Gas 使用量: %d\n", blockByHash.GasUsed)
+	// }
+
+	// 获取指定交易哈希的交易详细信息
+	// txHash := "0x2116f2bd64328306807f4551020b060e52fa2a9fdd18095835da39e89a13dca4"
+	// tx, err := client.GetTransactionByHash(ctx, txHash)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// fmt.Printf("\n交易详细信息:\n")
+	// fmt.Printf("  交易哈希: %s\n", tx.Hash)
+	// fmt.Printf("  区块号: %d\n", tx.BlockNumber)
+	// fmt.Printf("  区块哈希: %s\n", tx.BlockHash)
+	// fmt.Printf("  发送方: %s\n", tx.From)
+	// fmt.Printf("  接收方: %s\n", tx.To)
+	// fmt.Printf("  交易值: %d\n", tx.Value)
+	// fmt.Printf("  Gas 限制: %d\n", tx.Gas)
+	// fmt.Printf("  Gas 价格: %d\n", tx.GasPrice)
+
+	// 通过区块哈希和交易索引获取交易信息
+	// blockHash := "0xc6fe56ed79afaf8330ec42e8b725bdbae4bea29a043bd34c469e50de51a83b3d"
+	// txIndex := uint64(6)
+	// txByIndex, err := client.GetTransactionByBlockHashAndIndex(ctx, blockHash, txIndex)
+	// if err != nil {
+	// 	fmt.Printf("获取区块哈希 %s 中索引为 %d 的交易时出错: %v\n", blockHash, txIndex, err)
+	// 	fmt.Println("注意: 某些节点可能不提供历史区块的完整信息，需要使用归档节点")
+	// } else {
+	// 	fmt.Printf("\n通过区块哈希和索引获取的交易信息:\n")
+	// 	fmt.Printf("  交易哈希: %s\n", txByIndex.Hash)
+	// 	fmt.Printf("  区块号: %d\n", txByIndex.BlockNumber)
+	// 	fmt.Printf("  区块哈希: %s\n", txByIndex.BlockHash)
+	// 	fmt.Printf("  发送方: %s\n", txByIndex.From)
+	// 	fmt.Printf("  接收方: %s\n", txByIndex.To)
+	// 	fmt.Printf("  交易值: %d\n", txByIndex.Value)
+	// 	fmt.Printf("  Gas 限制: %d\n", txByIndex.Gas)
+	// 	fmt.Printf("  Gas 价格: %d\n", txByIndex.GasPrice)
+	// }
+
+    // 通过区块号和交易索引获取交易信息
+    // blockNum := fmt.Sprintf("0x%x", 22123841)
+    // txIndex := uint64(112)
+    // txByNumberAndIndex, err := client.GetTransactionByBlockNumberAndIndex(ctx, blockNum, txIndex)
+    // if err != nil {
+    //     fmt.Printf("获取区块 %s 中索引为 %d 的交易时出错: %v\n", blockNum, txIndex, err)
+    //     fmt.Println("注意: 某些节点可能不提供历史区块的完整信息，需要使用归档节点")
+    // } else {
+    //     fmt.Printf("\n通过区块号和索引获取的交易信息:\n")
+    //     fmt.Printf("  交易哈希: %s\n", txByNumberAndIndex.Hash)
+    //     fmt.Printf("  区块号: %d\n", txByNumberAndIndex.BlockNumber)
+    //     fmt.Printf("  区块哈希: %s\n", txByNumberAndIndex.BlockHash)
+    //     fmt.Printf("  发送方: %s\n", txByNumberAndIndex.From)
+    //     fmt.Printf("  接收方: %s\n", txByNumberAndIndex.To)
+    //     fmt.Printf("  交易值: %d\n", txByNumberAndIndex.Value)
+    //     fmt.Printf("  Gas 限制: %d\n", txByNumberAndIndex.Gas)
+    //     fmt.Printf("  Gas 价格: %d\n", txByNumberAndIndex.GasPrice)
+    // }
 }

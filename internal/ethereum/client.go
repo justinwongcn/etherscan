@@ -405,6 +405,35 @@ func (c *Client) GetCode(ctx context.Context, address string, numberOrTag string
 	return result.(string), nil
 }
 
+// GetTransactionByHash 获取指定交易哈希的交易信息
+//
+// Parameters:
+//   - ctx: context.Context 用于控制请求的上下文
+//   - txHash: string 交易哈希（32字节的十六进制字符串）
+//
+// Returns:
+//   - *eth.Transaction: 交易信息，包含交易哈希、区块信息、发送方和接收方地址、交易值、gas相关参数等
+//   - error: 可能的错误：
+//   - 无效的交易哈希格式
+//   - 节点连接错误
+//   - 交易不存在
+func (c *Client) GetTransactionByHash(ctx context.Context, txHash string) (*eth.Transaction, error) {
+	// 验证交易哈希格式
+	if len(txHash) < 2 || txHash[:2] != "0x" {
+		return nil, fmt.Errorf("invalid transaction hash format: must be hex string starting with 0x")
+	}
+
+	// 使用通用的连接池辅助函数执行操作
+	result, err := c.withConnection(ctx, func(conn node.Client) (any, error) {
+		return conn.TransactionByHash(ctx, txHash)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result.(*eth.Transaction), nil
+}
+
 // SendRawTransaction 发送已签名的交易数据
 //
 // Parameters:
@@ -479,12 +508,15 @@ func (c *Client) Call(ctx context.Context, from, to string, gas, gasPrice, value
 
 	// 创建交易对象
 	tx := eth.Transaction{
-		From:     *fromAddr,
 		To:       toAddr,
 		Gas:      *eth.MustQuantity(fmt.Sprintf("0x%x", gas)),
 		GasPrice: eth.MustQuantity(fmt.Sprintf("0x%x", gasPrice)),
 		Value:    *eth.MustQuantity(fmt.Sprintf("0x%x", value)),
 		Input:    eth.Input(data),
+	}
+
+	if fromAddr != nil {
+		tx.From = *fromAddr
 	}
 
 	// 使用通用的连接池辅助函数执行操作
@@ -495,4 +527,236 @@ func (c *Client) Call(ctx context.Context, from, to string, gas, gasPrice, value
 		return "", err
 	}
 	return result.(string), nil
+}
+
+// EstimateGas 估算交易所需的gas数量
+//
+// Parameters:
+//   - ctx: context.Context 用于控制请求的上下文
+//   - from: string 可选，交易发送方地址
+//   - to: string 可选，交易接收方地址
+//   - gas: uint64 可选，交易执行的gas限制
+//   - gasPrice: uint64 可选，每单位gas的价格
+//   - value: uint64 可选，随交易发送的以太币数量
+//   - data: string 可选，方法签名和编码参数的哈希
+//
+// Returns:
+//   - uint64: 预估的gas数量，注意：返回的估算值可能会显著高于实际使用量
+//   - error: 可能的错误：
+//   - 无效的地址格式
+//   - 节点连接错误
+func (c *Client) EstimateGas(ctx context.Context, from, to string, gas, gasPrice, value uint64, data string) (uint64, error) {
+	var fromAddr, toAddr *eth.Address
+	var err error
+
+	if from != "" {
+		addr, err := eth.NewAddress(from)
+		if err != nil {
+			return 0, fmt.Errorf("invalid from address: %v", err)
+		}
+		fromAddr = addr
+	}
+
+	if to != "" {
+		addr, err := eth.NewAddress(to)
+		if err != nil {
+			return 0, fmt.Errorf("invalid to address: %v", err)
+		}
+		toAddr = addr
+	}
+
+	// 创建交易对象
+	tx := eth.Transaction{
+		Input: eth.Input(data),
+	}
+
+	// 设置可选参数
+	if fromAddr != nil {
+		tx.From = *fromAddr
+	}
+	if toAddr != nil {
+		tx.To = toAddr
+	}
+	if gas > 0 {
+		tx.Gas = *eth.MustQuantity(fmt.Sprintf("0x%x", gas))
+	}
+	if gasPrice > 0 {
+		tx.GasPrice = eth.MustQuantity(fmt.Sprintf("0x%x", gasPrice))
+	}
+	if value > 0 {
+		tx.Value = *eth.MustQuantity(fmt.Sprintf("0x%x", value))
+	}
+
+	// 使用通用的连接池辅助函数执行操作
+	result, err := c.withConnection(ctx, func(conn node.Client) (any, error) {
+		return conn.EstimateGas(ctx, tx)
+	})
+	if err != nil {
+		return 0, err
+	}
+	return result.(uint64), nil
+}
+
+// GetTransactionByBlockHashAndIndex 通过区块哈希和交易索引获取交易信息
+//
+// Parameters:
+//   - ctx: context.Context 用于控制请求的上下文
+//   - blockHash: string 区块哈希（32字节的十六进制字符串）
+//   - index: uint64 交易在区块中的索引位置
+//
+// Returns:
+//   - *eth.Transaction: 交易信息，包含交易哈希、区块信息、发送方和接收方地址、交易值、gas相关参数等
+//   - error: 可能的错误：
+//   - 无效的区块哈希格式
+//   - 节点连接错误
+//   - 交易不存在
+func (c *Client) GetTransactionByBlockHashAndIndex(ctx context.Context, blockHash string, index uint64) (*eth.Transaction, error) {
+	// 验证区块哈希格式
+	if len(blockHash) < 2 || blockHash[:2] != "0x" {
+		return nil, fmt.Errorf("invalid block hash format: must be hex string starting with 0x")
+	}
+
+	// 使用通用的连接池辅助函数执行操作
+	result, err := c.withConnection(ctx, func(conn node.Client) (any, error) {
+		return conn.GetTransactionByBlockHashAndIndex(ctx, blockHash, index)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result.(*eth.Transaction), nil
+}
+
+// GetBlockByHash 获取指定区块哈希的区块信息
+//
+// Parameters:
+//   - ctx: context.Context 用于控制请求的上下文
+//   - blockHash: string 区块哈希（32字节的十六进制字符串）
+//   - fullTx: bool 如果为true则返回完整的交易对象，否则仅返回交易哈希
+//
+// Returns:
+//   - *eth.Block: 区块信息，包含区块头、交易等数据
+//   - error: 可能的错误：
+//   - 无效的区块哈希格式
+//   - 节点连接错误
+//   - 区块不存在
+func (c *Client) GetBlockByHash(ctx context.Context, blockHash string, fullTx bool) (*eth.Block, error) {
+	// 验证区块哈希格式
+	if len(blockHash) < 2 || blockHash[:2] != "0x" {
+		return nil, fmt.Errorf("invalid block hash format: must be hex string starting with 0x")
+	}
+
+	// 使用通用的连接池辅助函数执行操作
+	result, err := c.withConnection(ctx, func(conn node.Client) (any, error) {
+		return conn.BlockByHash(ctx, blockHash, fullTx)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result.(*eth.Block), nil
+}
+
+// GetBlockByNumber 获取指定区块号的区块信息
+//
+// Parameters:
+//   - ctx: context.Context 用于控制请求的上下文
+//   - numberOrTag: string 区块号，可以是以下格式：
+//   - 十六进制字符串（如"0x1"）表示具体区块号
+//   - "latest" - 最新区块（默认）
+//   - "earliest" - 创世区块
+//   - "pending" - 待处理区块
+//   - fullTx: bool 如果为true则返回完整的交易对象，否则仅返回交易哈希
+//
+// Returns:
+//   - *eth.Block: 区块信息，包含区块头、交易等数据
+//   - error: 可能的错误：
+//   - 无效的区块号格式
+//   - 节点连接错误
+//   - 区块不存在
+func (c *Client) GetBlockByNumber(ctx context.Context, numberOrTag string, fullTx bool) (*eth.Block, error) {
+	// 处理默认值并验证区块号格式
+	numOrTag := eth.MustBlockNumberOrTag(getDefaultNumberOrTag(numberOrTag))
+	if numOrTag == nil {
+		return nil, fmt.Errorf("invalid block number or tag: %s", numberOrTag)
+	}
+
+	// 使用通用的连接池辅助函数执行操作
+	result, err := c.withConnection(ctx, func(conn node.Client) (any, error) {
+		return conn.BlockByNumber(ctx, *numOrTag, fullTx)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result.(*eth.Block), nil
+}
+
+// GetTransactionByBlockNumberAndIndex 通过区块号和交易索引获取交易信息
+//
+// Parameters:
+//   - ctx: context.Context 用于控制请求的上下文
+//   - numberOrTag: string 区块号，可以是以下格式：
+//   - 十六进制字符串（如"0x1"）表示具体区块号
+//   - "latest" - 最新区块（默认）
+//   - "earliest" - 创世区块
+//   - "pending" - 待处理区块
+//   - index: uint64 交易在区块中的索引位置
+//
+// Returns:
+//   - *eth.Transaction: 交易信息，包含交易哈希、区块信息、发送方和接收方地址、交易值、gas相关参数等
+//   - error: 可能的错误：
+//   - 无效的区块号格式
+//   - 节点连接错误
+//   - 交易不存在
+func (c *Client) GetTransactionByBlockNumberAndIndex(ctx context.Context, numberOrTag string, index uint64) (*eth.Transaction, error) {
+	// 处理默认值并验证区块号格式
+	numOrTag := eth.MustBlockNumberOrTag(getDefaultNumberOrTag(numberOrTag))
+	if numOrTag == nil {
+		return nil, fmt.Errorf("invalid block number or tag: %s", numberOrTag)
+	}
+
+	// 使用通用的连接池辅助函数执行操作
+	result, err := c.withConnection(ctx, func(conn node.Client) (any, error) {
+		return conn.GetTransactionByBlockNumberAndIndex(ctx, *numOrTag, index)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return result.(*eth.Transaction), nil
+}
+
+// GetTransactionReceipt 获取交易收据信息
+//
+// Parameters:
+//   - ctx: context.Context 用于控制请求的上下文
+//   - txHash: string 交易哈希（32字节的十六进制字符串）
+//
+// Returns:
+//   - *eth.TransactionReceipt: 交易收据信息，包含交易哈希、区块信息、gas使用情况、合约地址、日志等
+//   - error: 可能的错误：
+//   - 无效的交易哈希格式
+//   - 节点连接错误
+//   - 交易收据不存在
+func (c *Client) GetTransactionReceipt(ctx context.Context, txHash string) (*eth.TransactionReceipt, error) {
+	// 验证交易哈希格式
+	if len(txHash) < 2 || txHash[:2] != "0x" {
+		return nil, fmt.Errorf("invalid transaction hash format: must be hex string starting with 0x")
+	}
+
+	// 使用通用的连接池辅助函数执行操作
+	result, err := c.withConnection(ctx, func(conn node.Client) (any, error) {
+		return conn.TransactionReceipt(ctx, txHash)
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	// 如果结果为nil，表示交易收据不存在
+	if result == nil {
+		return nil, nil
+	}
+
+	return result.(*eth.TransactionReceipt), nil
 }
