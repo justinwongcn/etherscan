@@ -111,13 +111,13 @@ func main() {
 	}
 
 	fmt.Printf("\n最新区块信息:\n")
-	fmt.Printf("  区块号: %d\n", block.Number)
+	fmt.Printf("  区块号: %d\n", block.Number.UInt64())
 	fmt.Printf("  区块哈希: %s\n", block.Hash)
 	fmt.Printf("  父区块哈希: %s\n", block.ParentHash)
-	fmt.Printf("  时间戳: %d\n", block.Timestamp)
+	fmt.Printf("  时间戳: %d\n", block.Timestamp.UInt64())
 	fmt.Printf("  交易数量: %d\n", len(block.Transactions))
-	fmt.Printf("  Gas 限制: %d\n", block.GasLimit)
-	fmt.Printf("  Gas 使用量: %d\n", block.GasUsed)
+	fmt.Printf("  Gas 限制: %d\n", block.GasLimit.UInt64())
+	fmt.Printf("  Gas 使用量: %d\n", block.GasUsed.UInt64())
 
 	// 通过区块哈希获取区块信息
 	// blockHash := "0x1e9f9b71ea85e1037dd14438714b74fe8c36c93b6b334336aa0708ffbb4c206c"
@@ -221,14 +221,12 @@ func main() {
 		fmt.Println("注意: 某些节点可能不提供历史区块的完整信息，需要使用归档节点")
 	} else {
 		fmt.Printf("\n叔块信息:\n")
-		fmt.Printf("  区块号: %d\n", uncle.Number)
+		fmt.Printf("  区块号: %d\n", uncle.Number.UInt64())
 		fmt.Printf("  区块哈希: %s\n", uncle.Hash)
 		fmt.Printf("  父区块哈希: %s\n", uncle.ParentHash)
-		fmt.Printf("  时间戳: %d\n", uncle.Timestamp)
+		fmt.Printf("  时间戳: %d\n", uncle.Timestamp.UInt64())
 		fmt.Printf("  交易数量: %d\n", len(uncle.Transactions))
-		fmt.Printf("  Gas 限制: %d\n", uncle.GasLimit)
-		fmt.Printf("  Gas 使用量: %d\n", uncle.GasUsed)
+		fmt.Printf("  Gas 限制: %d\n", uncle.GasLimit.UInt64())
+		fmt.Printf("  Gas 使用量: %d\n", uncle.GasUsed.UInt64())
 	}
-
-	// TODO: func (c *Client) GetUncleByBlockHashAndIndex(ctx context.Context, blockHash string, index uint64) (*eth.Block, error) hash: 0x338462425924aada0541b9df67eea1d0240383fddb8827b502a432c1acc1e9b5 index: 0
 }
