@@ -191,23 +191,44 @@ func main() {
 	//     fmt.Printf("  Gas 价格: %d\n", txByNumberAndIndex.GasPrice)
 	// }
 
-	// 获取交易回执信息
-	receipt, err := client.GetTransactionReceipt(ctx, "0xfd225fcad404dbaf401c9c19de219a4867e37813ab3fd1e7adb75cf878031629")
+	// 获取交易收据信息
+	//txHash := "0x92d0a6c0baf0edcbe8605ec140b85372750183e086ffdb9dbd0f43a206506c7a"
+	//receipt, err := client.GetTransactionReceipt(ctx, txHash)
+	//if err != nil {
+	//    panic(err)
+	//}
+	//
+	//if receipt != nil {
+	//    fmt.Printf("\n交易收据信息:\n")
+	//    fmt.Printf("  交易哈希: %s\n", receipt.TransactionHash)
+	//    fmt.Printf("  区块号: %d\n", receipt.BlockNumber)
+	//    fmt.Printf("  区块哈希: %s\n", receipt.BlockHash)
+	//    fmt.Printf("  交易索引: %d\n", receipt.TransactionIndex)
+	//    fmt.Printf("  合约地址: %s\n", receipt.ContractAddress)
+	//    fmt.Printf("  Gas 使用量: %d\n", receipt.GasUsed)
+	//    fmt.Printf("  状态: %d\n", receipt.Status)
+	//    fmt.Printf("  日志数量: %d\n", len(receipt.Logs))
+	//} else {
+	//    fmt.Println("交易收据不存在")
+	//}
+
+	// 通过区块哈希和索引获取叔块信息
+	blockHash := "0x338462425924aada0541b9df67eea1d0240383fddb8827b502a432c1acc1e9b5"
+	index := uint64(0)
+	uncle, err := client.GetUncleByBlockHashAndIndex(ctx, blockHash, index)
 	if err != nil {
-		panic(err)
+		fmt.Printf("获取区块哈希 %s 中索引为 %d 的叔块时出错: %v\n", blockHash, index, err)
+		fmt.Println("注意: 某些节点可能不提供历史区块的完整信息，需要使用归档节点")
+	} else {
+		fmt.Printf("\n叔块信息:\n")
+		fmt.Printf("  区块号: %d\n", uncle.Number)
+		fmt.Printf("  区块哈希: %s\n", uncle.Hash)
+		fmt.Printf("  父区块哈希: %s\n", uncle.ParentHash)
+		fmt.Printf("  时间戳: %d\n", uncle.Timestamp)
+		fmt.Printf("  交易数量: %d\n", len(uncle.Transactions))
+		fmt.Printf("  Gas 限制: %d\n", uncle.GasLimit)
+		fmt.Printf("  Gas 使用量: %d\n", uncle.GasUsed)
 	}
 
-	if receipt == nil {
-		fmt.Println("交易回执不存在，可能交易尚未被打包")
-	} else {
-		fmt.Printf("\n交易回执信息:\n")
-		fmt.Printf("  交易哈希: %s\n", receipt.TransactionHash.Hash())
-		fmt.Printf("  区块号: %d\n", receipt.BlockNumber.Int64())
-		fmt.Printf("  区块哈希: %s\n", receipt.BlockHash)
-		fmt.Printf("  交易索引: %d\n", receipt.TransactionIndex.Int64())
-		fmt.Printf("  合约地址: %s\n", receipt.ContractAddress)
-		fmt.Printf("  Gas 使用量: %d\n", receipt.GasUsed.Int64())
-		fmt.Printf("  状态: %v\n", receipt.Status)
-	}
-	// TODO
+	// TODO: func (c *Client) GetUncleByBlockHashAndIndex(ctx context.Context, blockHash string, index uint64) (*eth.Block, error) hash: 0x338462425924aada0541b9df67eea1d0240383fddb8827b502a432c1acc1e9b5 index: 0
 }
