@@ -195,25 +195,25 @@ func main() {
 	//txHash := "0x92d0a6c0baf0edcbe8605ec140b85372750183e086ffdb9dbd0f43a206506c7a"
 	//receipt, err := client.GetTransactionReceipt(ctx, txHash)
 	//if err != nil {
-	//    panic(err)
+	//	panic(err)
 	//}
 	//
 	//if receipt != nil {
-	//    fmt.Printf("\n交易收据信息:\n")
-	//    fmt.Printf("  交易哈希: %s\n", receipt.TransactionHash)
-	//    fmt.Printf("  区块号: %d\n", receipt.BlockNumber)
-	//    fmt.Printf("  区块哈希: %s\n", receipt.BlockHash)
-	//    fmt.Printf("  交易索引: %d\n", receipt.TransactionIndex)
-	//    fmt.Printf("  合约地址: %s\n", receipt.ContractAddress)
-	//    fmt.Printf("  Gas 使用量: %d\n", receipt.GasUsed)
-	//    fmt.Printf("  状态: %d\n", receipt.Status)
-	//    fmt.Printf("  日志数量: %d\n", len(receipt.Logs))
+	//	fmt.Printf("\n交易收据信息:\n")
+	//	fmt.Printf("  交易哈希: %s\n", receipt.TransactionHash)
+	//	fmt.Printf("  区块号: %d\n", receipt.BlockNumber.UInt64())
+	//	fmt.Printf("  区块哈希: %s\n", receipt.BlockHash)
+	//	fmt.Printf("  交易索引: %d\n", receipt.TransactionIndex.UInt64())
+	//	fmt.Printf("  合约地址: %s\n", receipt.ContractAddress)
+	//	fmt.Printf("  Gas 使用量: %d\n", receipt.GasUsed.UInt64())
+	//	fmt.Printf("  状态: %d\n", receipt.Status.Int64())
+	//	fmt.Printf("  日志数量: %d\n", len(receipt.Logs))
 	//} else {
-	//    fmt.Println("交易收据不存在")
+	//	fmt.Println("交易收据不存在")
 	//}
 
 	// 通过区块哈希和索引获取叔块信息
-	blockHash := "0x338462425924aada0541b9df67eea1d0240383fddb8827b502a432c1acc1e9b5"
+	blockHash := "0x2521a5a455c6b4fef9d2da8766390eddc0379f633869cb1b674b02c4b057a10e"
 	index := uint64(0)
 	uncle, err := client.GetUncleByBlockHashAndIndex(ctx, blockHash, index)
 	if err != nil {
