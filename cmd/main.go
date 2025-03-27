@@ -172,22 +172,42 @@ func main() {
 	// 	fmt.Printf("  Gas 价格: %d\n", txByIndex.GasPrice)
 	// }
 
-    // 通过区块号和交易索引获取交易信息
-    // blockNum := fmt.Sprintf("0x%x", 22123841)
-    // txIndex := uint64(112)
-    // txByNumberAndIndex, err := client.GetTransactionByBlockNumberAndIndex(ctx, blockNum, txIndex)
-    // if err != nil {
-    //     fmt.Printf("获取区块 %s 中索引为 %d 的交易时出错: %v\n", blockNum, txIndex, err)
-    //     fmt.Println("注意: 某些节点可能不提供历史区块的完整信息，需要使用归档节点")
-    // } else {
-    //     fmt.Printf("\n通过区块号和索引获取的交易信息:\n")
-    //     fmt.Printf("  交易哈希: %s\n", txByNumberAndIndex.Hash)
-    //     fmt.Printf("  区块号: %d\n", txByNumberAndIndex.BlockNumber)
-    //     fmt.Printf("  区块哈希: %s\n", txByNumberAndIndex.BlockHash)
-    //     fmt.Printf("  发送方: %s\n", txByNumberAndIndex.From)
-    //     fmt.Printf("  接收方: %s\n", txByNumberAndIndex.To)
-    //     fmt.Printf("  交易值: %d\n", txByNumberAndIndex.Value)
-    //     fmt.Printf("  Gas 限制: %d\n", txByNumberAndIndex.Gas)
-    //     fmt.Printf("  Gas 价格: %d\n", txByNumberAndIndex.GasPrice)
-    // }
+	// 通过区块号和交易索引获取交易信息
+	// blockNum := fmt.Sprintf("0x%x", 22123841)
+	// txIndex := uint64(112)
+	// txByNumberAndIndex, err := client.GetTransactionByBlockNumberAndIndex(ctx, blockNum, txIndex)
+	// if err != nil {
+	//     fmt.Printf("获取区块 %s 中索引为 %d 的交易时出错: %v\n", blockNum, txIndex, err)
+	//     fmt.Println("注意: 某些节点可能不提供历史区块的完整信息，需要使用归档节点")
+	// } else {
+	//     fmt.Printf("\n通过区块号和索引获取的交易信息:\n")
+	//     fmt.Printf("  交易哈希: %s\n", txByNumberAndIndex.Hash)
+	//     fmt.Printf("  区块号: %d\n", txByNumberAndIndex.BlockNumber)
+	//     fmt.Printf("  区块哈希: %s\n", txByNumberAndIndex.BlockHash)
+	//     fmt.Printf("  发送方: %s\n", txByNumberAndIndex.From)
+	//     fmt.Printf("  接收方: %s\n", txByNumberAndIndex.To)
+	//     fmt.Printf("  交易值: %d\n", txByNumberAndIndex.Value)
+	//     fmt.Printf("  Gas 限制: %d\n", txByNumberAndIndex.Gas)
+	//     fmt.Printf("  Gas 价格: %d\n", txByNumberAndIndex.GasPrice)
+	// }
+
+	// 获取交易回执信息
+	receipt, err := client.GetTransactionReceipt(ctx, "0xfd225fcad404dbaf401c9c19de219a4867e37813ab3fd1e7adb75cf878031629")
+	if err != nil {
+		panic(err)
+	}
+
+	if receipt == nil {
+		fmt.Println("交易回执不存在，可能交易尚未被打包")
+	} else {
+		fmt.Printf("\n交易回执信息:\n")
+		fmt.Printf("  交易哈希: %s\n", receipt.TransactionHash.Hash())
+		fmt.Printf("  区块号: %d\n", receipt.BlockNumber.Int64())
+		fmt.Printf("  区块哈希: %s\n", receipt.BlockHash)
+		fmt.Printf("  交易索引: %d\n", receipt.TransactionIndex.Int64())
+		fmt.Printf("  合约地址: %s\n", receipt.ContractAddress)
+		fmt.Printf("  Gas 使用量: %d\n", receipt.GasUsed.Int64())
+		fmt.Printf("  状态: %v\n", receipt.Status)
+	}
+	// TODO
 }
