@@ -33,3 +33,13 @@ func (s *BlockService) GetBlockByNumber(ctx context.Context, numberOrTag string)
 func (s *BlockService) GetBlockByHash(ctx context.Context, blockHash string) (*eth.Block, error) {
 	return s.client.GetBlockByHash(ctx, blockHash, true)
 }
+
+// GetTransactionCount 获取指定区块的交易数量
+func (s *BlockService) GetTransactionCount(ctx context.Context, blockHashOrNumber string) (uint64, error) {
+	// 判断是否为区块哈希（以0x开头的十六进制字符串）
+	if len(blockHashOrNumber) >= 2 && blockHashOrNumber[:2] == "0x" {
+		return s.client.GetBlockTransactionCountByHash(ctx, blockHashOrNumber)
+	}
+	// 否则视为区块号
+	return s.client.GetBlockTransactionCountByNumber(ctx, blockHashOrNumber)
+}

@@ -14,4 +14,6 @@ type BlockServiceInterface interface {
 	GetBlockByNumber(ctx context.Context, numberOrTag string) (*eth.Block, error)
 	// GetBlockByHash 获取指定区块哈希的区块信息
 	GetBlockByHash(ctx context.Context, blockHash string) (*eth.Block, error)
+	// GetTransactionCount 获取指定区块的交易数量
+	GetTransactionCount(ctx context.Context, blockHashOrNumber string) (uint64, error)
 }

@@ -4,9 +4,9 @@ import (
 	"math/big"
 	"net/http"
 
-	"github.com/justinwongcn/go-ethlibs/eth"
 	"github.com/gin-gonic/gin"
 	"github.com/justinwongcn/etherscan/application/service"
+	"github.com/justinwongcn/go-ethlibs/eth"
 )
 
 // BlockHandler 区块处理器，处理区块相关的HTTP请求
@@ -79,6 +79,30 @@ func (h *BlockHandler) GetBlockByNumberOrHash(c *gin.Context) {
 
 // isDecimalNumber checks if string is a valid decimal number
 func isDecimalNumber(s string) bool {
-    _, ok := new(big.Int).SetString(s, 10)
-    return ok
+	_, ok := new(big.Int).SetString(s, 10)
+	return ok
+}
+
+// GetTransactionCount 获取指定区块的交易数量
+func (h *BlockHandler) GetTransactionCount(c *gin.Context) {
+	// 从URL路径中获取区块号或哈希
+	blockParam := c.Param("number")
+	// 如果参数为空，则使用latest
+	if blockParam == "" {
+		blockParam = "latest"
+	}
+
+	// 获取交易数量
+	count, err := h.blockService.GetTransactionCount(c.Request.Context(), blockParam)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// 返回交易数量
+	c.JSON(http.StatusOK, gin.H{
+		"count": count,
+	})
 }

@@ -48,6 +48,12 @@ func (m *MockBlockService) GetBlockByHash(ctx context.Context, blockHash string)
 	return nil, args.Error(1)
 }
 
+// GetTransactionCount mock实现
+func (m *MockBlockService) GetTransactionCount(ctx context.Context, blockHashOrNumber string) (uint64, error) {
+	args := m.Called(ctx, blockHashOrNumber)
+	return args.Get(0).(uint64), args.Error(1)
+}
+
 func TestGetBlockHeight(t *testing.T) {
 	// 设置测试用例
 	tests := []struct {
