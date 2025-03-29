@@ -13,7 +13,7 @@ import (
 func main() {
 	// 创建以太坊客户端
 	opts := ethereum.DefaultClientOptions()
-	client, err := ethereum.NewClient(context.Background(), "wss://ethereum.callstaticrpc.com", opts)
+	client, err := ethereum.NewClient(context.Background(), "https://rpc.mevblocker.io", opts)
 	if err != nil {
 		log.Fatalf("Failed to create ethereum client: %v", err)
 	}
@@ -29,8 +29,8 @@ func main() {
 
 	// 注册路由
 	r.GET("/block/height", blockHandler.GetBlockHeight)
-	r.GET("/block/:number", blockHandler.GetBlockByNumberOrHash)
-	r.GET("/block/:number/transactions/count", blockHandler.GetTransactionCount)
+	r.GET("/block/:number", blockHandler.GetBlock)
+	r.GET("/block/count/:number", blockHandler.GetTransactionCount)
 
 	// 启动服务器
 	if err := r.Run(":8080"); err != nil {

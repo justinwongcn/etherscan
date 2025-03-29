@@ -30,18 +30,9 @@ func (m *MockBlockService) GetLatestBlockHeight(ctx context.Context) (uint64, er
 	return args.Get(0).(uint64), args.Error(1)
 }
 
-// GetBlockByNumber mock实现
-func (m *MockBlockService) GetBlockByNumber(ctx context.Context, numberOrTag string) (*eth.Block, error) {
-	args := m.Called(ctx, numberOrTag)
-	if block, ok := args.Get(0).(*eth.Block); ok {
-		return block, args.Error(1)
-	}
-	return nil, args.Error(1)
-}
-
-// GetBlockByHash mock实现
-func (m *MockBlockService) GetBlockByHash(ctx context.Context, blockHash string) (*eth.Block, error) {
-	args := m.Called(ctx, blockHash)
+// GetBlock mock实现
+func (m *MockBlockService) GetBlock(ctx context.Context, blockHashOrNumber string) (*eth.Block, error) {
+	args := m.Called(ctx, blockHashOrNumber)
 	if block, ok := args.Get(0).(*eth.Block); ok {
 		return block, args.Error(1)
 	}
@@ -54,6 +45,89 @@ func (m *MockBlockService) GetTransactionCount(ctx context.Context, blockHashOrN
 	return args.Get(0).(uint64), args.Error(1)
 }
 
+func TestGetTransactionCount(t *testing.T) {
+	// 设置测试用例
+	tests := []struct {
+		name           string
+		blockParam     string
+		mockCount      uint64
+		mockError      error
+		expectedStatus int
+		expectedBody   map[string]any
+	}{
+		{
+			name:           "成功获取区块交易数量",
+			blockParam:     "12345",
+			mockCount:      100,
+			mockError:      nil,
+			expectedStatus: http.StatusOK,
+			expectedBody:   map[string]any{"count": float64(100)},
+		},
+		{
+			name:           "使用latest标签获取交易数量",
+			blockParam:     "latest",
+			mockCount:      50,
+			mockError:      nil,
+			expectedStatus: http.StatusOK,
+			expectedBody:   map[string]any{"count": float64(50)},
+		},
+		{
+			name:           "使用区块哈希获取交易数量",
+			blockParam:     "0x1234567890abcdef",
+			mockCount:      75,
+			mockError:      nil,
+			expectedStatus: http.StatusOK,
+			expectedBody:   map[string]any{"count": float64(75)},
+		},
+		{
+			name:           "获取交易数量失败",
+			blockParam:     "12345",
+			mockCount:      0,
+			mockError:      errors.New("failed to get transaction count"),
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   map[string]any{"error": "failed to get transaction count"},
+		},
+	}
+
+	// 运行测试用例
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// 创建mock service
+			mockService := new(MockBlockService)
+			mockService.On("GetTransactionCount", mock.Anything, tt.blockParam).Return(tt.mockCount, tt.mockError)
+
+			// 创建handler
+			handler := NewBlockHandler(mockService)
+
+			// 创建gin测试环境
+			gin.SetMode(gin.TestMode)
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
+
+			// 设置路由参数
+			c.Params = gin.Params{{Key: "number", Value: tt.blockParam}}
+
+			// 创建HTTP请求
+			req := httptest.NewRequest(http.MethodGet, "/api/block/"+tt.blockParam+"/txcount", nil)
+			c.Request = req
+
+			// 调用接口
+			handler.GetTransactionCount(c)
+
+			// 验证响应
+			assert.Equal(t, tt.expectedStatus, w.Code)
+
+			var response map[string]any
+			err := json.Unmarshal(w.Body.Bytes(), &response)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedBody, response)
+
+			// 验证mock调用
+			mockService.AssertExpectations(t)
+		})
+	}
+}
+
 func TestGetBlockHeight(t *testing.T) {
 	// 设置测试用例
 	tests := []struct {
@@ -61,21 +135,21 @@ func TestGetBlockHeight(t *testing.T) {
 		mockHeight     uint64
 		mockError      error
 		expectedStatus int
-		expectedBody   map[string]interface{}
+		expectedBody   map[string]any
 	}{
 		{
 			name:           "成功获取区块高度",
 			mockHeight:     12345,
 			mockError:      nil,
 			expectedStatus: http.StatusOK,
-			expectedBody:   map[string]interface{}{"height": float64(12345)},
+			expectedBody:   map[string]any{"height": float64(12345)},
 		},
 		{
 			name:           "获取区块高度失败",
 			mockHeight:     0,
 			mockError:      errors.New("failed to get block height"),
 			expectedStatus: http.StatusInternalServerError,
-			expectedBody:   map[string]interface{}{"error": "failed to get block height"},
+			expectedBody:   map[string]any{"error": "failed to get block height"},
 		},
 	}
 
@@ -104,7 +178,7 @@ func TestGetBlockHeight(t *testing.T) {
 			// 验证响应
 			assert.Equal(t, tt.expectedStatus, w.Code)
 
-			var response map[string]interface{}
+			var response map[string]any
 			err := json.Unmarshal(w.Body.Bytes(), &response)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expectedBody, response)
@@ -126,7 +200,7 @@ func TestGetBlockByNumberOrHash(t *testing.T) {
 		mockBlock      *eth.Block
 		mockError      error
 		expectedStatus int
-		expectedBody   map[string]interface{}
+		expectedBody   map[string]any
 	}{
 		{
 			name:           "通过区块哈希获取区块成功",
@@ -134,7 +208,7 @@ func TestGetBlockByNumberOrHash(t *testing.T) {
 			mockBlock:      mockBlock,
 			mockError:      nil,
 			expectedStatus: http.StatusOK,
-			expectedBody:   map[string]interface{}{"block": mockBlock},
+			expectedBody:   map[string]any{"block": mockBlock},
 		},
 		{
 			name:           "通过区块号获取区块成功",
@@ -142,7 +216,7 @@ func TestGetBlockByNumberOrHash(t *testing.T) {
 			mockBlock:      mockBlock,
 			mockError:      nil,
 			expectedStatus: http.StatusOK,
-			expectedBody:   map[string]interface{}{"block": mockBlock},
+			expectedBody:   map[string]any{"block": mockBlock},
 		},
 		{
 			name:           "通过latest标签获取区块成功",
@@ -150,7 +224,7 @@ func TestGetBlockByNumberOrHash(t *testing.T) {
 			mockBlock:      mockBlock,
 			mockError:      nil,
 			expectedStatus: http.StatusOK,
-			expectedBody:   map[string]interface{}{"block": mockBlock},
+			expectedBody:   map[string]any{"block": mockBlock},
 		},
 		{
 			name:           "获取区块失败",
@@ -158,7 +232,7 @@ func TestGetBlockByNumberOrHash(t *testing.T) {
 			mockBlock:      nil,
 			mockError:      errors.New("failed to get block"),
 			expectedStatus: http.StatusInternalServerError,
-			expectedBody:   map[string]interface{}{"error": "failed to get block"},
+			expectedBody:   map[string]any{"error": "failed to get block"},
 		},
 	}
 
@@ -194,12 +268,12 @@ func TestGetBlockByNumberOrHash(t *testing.T) {
 			c.Request = req
 
 			// 调用接口
-			handler.GetBlockByNumberOrHash(c)
+			handler.GetBlock(c)
 
 			// 验证响应
 			assert.Equal(t, tt.expectedStatus, w.Code)
 
-			var response map[string]interface{}
+			var response map[string]any
 			err := json.Unmarshal(w.Body.Bytes(), &response)
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expectedBody, response)

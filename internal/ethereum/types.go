@@ -36,9 +36,9 @@ type ClientOptions struct {
 // DefaultClientOptions 返回默认的客户端配置选项
 func DefaultClientOptions() *ClientOptions {
 	return &ClientOptions{
-		MaxConns:     100,         // 默认最大连接数
-		IdleTimeout:  time.Minute, // 默认空闲超时时间
+		MaxConns:     30,         // 默认最大连接数
+		IdleTimeout:  3 * time.Minute, // 默认空闲超时时间
 		HealthCheck:  true,        // 默认启用健康检查
-		MaxIdleConns: 10,          // 默认最大空闲连接数
+		MaxIdleConns: 5,          // 默认最大空闲连接数
 	}
 }

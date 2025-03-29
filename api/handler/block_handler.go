@@ -1,27 +1,40 @@
+// Package handler 提供HTTP请求处理器，负责处理来自客户端的API请求
 package handler
 
 import (
-	"math/big"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/justinwongcn/etherscan/application/service"
-	"github.com/justinwongcn/go-ethlibs/eth"
 )
 
-// BlockHandler 区块处理器，处理区块相关的HTTP请求
+// BlockHandler 区块处理器，负责处理与以太坊区块相关的HTTP请求
+// 该处理器实现了RESTful风格的API接口，提供区块高度、区块信息和交易数量的查询功能
 type BlockHandler struct {
+	// blockService 是区块服务接口的实现，用于处理具体的业务逻辑
 	blockService service.BlockServiceInterface
 }
 
-// NewBlockHandler 创建区块处理器实例
+// NewBlockHandler 创建并初始化一个新的区块处理器实例
+// 参数:
+//   - blockService: 区块服务接口的实现，用于处理区块相关的业务逻辑
+//
+// 返回:
+//   - *BlockHandler: 初始化完成的处理器实例
 func NewBlockHandler(blockService service.BlockServiceInterface) *BlockHandler {
 	return &BlockHandler{
 		blockService: blockService,
 	}
 }
 
-// GetBlockHeight 获取最新区块高度
+// GetBlockHeight 处理获取最新区块高度的HTTP请求
+// 请求路径: GET /block/height
+// 响应格式:
+//   - 成功: {"height": <区块高度>}
+//   - 失败: {"error": <错误信息>}
+//
+// 错误码:
+//   - 500: 服务器内部错误
 func (h *BlockHandler) GetBlockHeight(c *gin.Context) {
 	// 获取最新区块高度
 	height, err := h.blockService.GetLatestBlockHeight(c.Request.Context())
@@ -38,8 +51,19 @@ func (h *BlockHandler) GetBlockHeight(c *gin.Context) {
 	})
 }
 
-// GetBlockByNumberOrHash 获取指定区块号或区块哈希的区块信息
-func (h *BlockHandler) GetBlockByNumberOrHash(c *gin.Context) {
+// GetBlock 处理获取区块信息的HTTP请求
+// 请求路径: GET /block/:number
+// 路径参数:
+//   - number: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
+//     支持的特殊值: "latest"（最新区块）、"earliest"（创世区块）、"pending"（待打包区块）
+//
+// 响应格式:
+//   - 成功: {"block": <区块信息对象>}
+//   - 失败: {"error": <错误信息>}
+//
+// 错误码:
+//   - 500: 服务器内部错误（包括参数格式错误）
+func (h *BlockHandler) GetBlock(c *gin.Context) {
 	// 从URL路径中获取区块号或哈希
 	blockParam := c.Param("number")
 	// 如果参数为空，则使用latest
@@ -47,23 +71,8 @@ func (h *BlockHandler) GetBlockByNumberOrHash(c *gin.Context) {
 		blockParam = "latest"
 	}
 
-	// 判断参数类型并调用相应的方法
-	var (
-		block *eth.Block
-		err   error
-	)
-
-	switch {
-	case len(blockParam) >= 2 && blockParam[:2] == "0x":
-		block, err = h.blockService.GetBlockByHash(c.Request.Context(), blockParam)
-	case isDecimalNumber(blockParam):
-		number, _ := new(big.Int).SetString(blockParam, 10)
-		numberOrTag := "0x" + number.Text(16)
-		block, err = h.blockService.GetBlockByNumber(c.Request.Context(), numberOrTag)
-	default:
-		block, err = h.blockService.GetBlockByNumber(c.Request.Context(), blockParam)
-	}
-
+	// 获取区块信息
+	block, err := h.blockService.GetBlock(c.Request.Context(), blockParam)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
@@ -77,13 +86,18 @@ func (h *BlockHandler) GetBlockByNumberOrHash(c *gin.Context) {
 	})
 }
 
-// isDecimalNumber checks if string is a valid decimal number
-func isDecimalNumber(s string) bool {
-	_, ok := new(big.Int).SetString(s, 10)
-	return ok
-}
-
-// GetTransactionCount 获取指定区块的交易数量
+// GetTransactionCount 处理获取区块交易数量的HTTP请求
+// 请求路径: GET /block/count/:number/tx
+// 路径参数:
+//   - number: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
+//     支持的特殊值: "latest"（最新区块）、"earliest"（创世区块）、"pending"（待打包区块）
+//
+// 响应格式:
+//   - 成功: {"count": <交易数量>}
+//   - 失败: {"error": <错误信息>}
+//
+// 错误码:
+//   - 500: 服务器内部错误（包括参数格式错误）
 func (h *BlockHandler) GetTransactionCount(c *gin.Context) {
 	// 从URL路径中获取区块号或哈希
 	blockParam := c.Param("number")
