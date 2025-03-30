@@ -40,12 +40,18 @@ func (m *MockBlockService) GetBlock(ctx context.Context, blockHashOrNumber strin
 }
 
 // GetTransactionCount mock实现
-func (m *MockBlockService) GetTransactionCount(ctx context.Context, blockHashOrNumber string) (uint64, error) {
+func (m *MockBlockService) GetBlockTransactionCount(ctx context.Context, blockHashOrNumber string) (uint64, error) {
 	args := m.Called(ctx, blockHashOrNumber)
 	return args.Get(0).(uint64), args.Error(1)
 }
 
-func TestGetTransactionCount(t *testing.T) {
+// GetTransactionCount mock实现
+func (m *MockBlockService) GetTransactionCount(ctx context.Context, address string, blockHashOrNumber string) (uint64, error) {
+	args := m.Called(ctx, address, blockHashOrNumber)
+	return args.Get(0).(uint64), args.Error(1)
+}
+
+func TestGetBlockTransactionCount(t *testing.T) {
 	// 设置测试用例
 	tests := []struct {
 		name           string
@@ -94,7 +100,7 @@ func TestGetTransactionCount(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// 创建mock service
 			mockService := new(MockBlockService)
-			mockService.On("GetTransactionCount", mock.Anything, tt.blockParam).Return(tt.mockCount, tt.mockError)
+			mockService.On("GetBlockTransactionCount", mock.Anything, tt.blockParam).Return(tt.mockCount, tt.mockError)
 
 			// 创建handler
 			handler := NewBlockHandler(mockService)
@@ -112,7 +118,7 @@ func TestGetTransactionCount(t *testing.T) {
 			c.Request = req
 
 			// 调用接口
-			handler.GetTransactionCount(c)
+			handler.GetBlockTransactionCount(c)
 
 			// 验证响应
 			assert.Equal(t, tt.expectedStatus, w.Code)
@@ -189,7 +195,109 @@ func TestGetBlockHeight(t *testing.T) {
 	}
 }
 
-func TestGetBlockByNumberOrHash(t *testing.T) {
+func TestGetTransactionCount(t *testing.T) {
+	// 设置测试用例
+	tests := []struct {
+		name           string
+		address        string
+		blockParam     string
+		mockCount      uint64
+		mockError      error
+		expectedStatus int
+		expectedBody   map[string]any
+	}{
+		{
+			name:           "成功获取账户交易数量",
+			address:        "0x1234567890abcdef",
+			blockParam:     "12345",
+			mockCount:      100,
+			mockError:      nil,
+			expectedStatus: http.StatusOK,
+			expectedBody:   map[string]any{"count": float64(100)},
+		},
+		{
+			name:           "使用latest标签获取交易数量",
+			address:        "0x1234567890abcdef",
+			blockParam:     "latest",
+			mockCount:      50,
+			mockError:      nil,
+			expectedStatus: http.StatusOK,
+			expectedBody:   map[string]any{"count": float64(50)},
+		},
+		{
+			name:           "使用区块哈希获取交易数量",
+			address:        "0x1234567890abcdef",
+			blockParam:     "0x1234567890abcdef",
+			mockCount:      75,
+			mockError:      nil,
+			expectedStatus: http.StatusOK,
+			expectedBody:   map[string]any{"count": float64(75)},
+		},
+		{
+			name:           "地址为空",
+			address:        "",
+			blockParam:     "12345",
+			mockCount:      0,
+			mockError:      nil,
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   map[string]any{"error": "address is required"},
+		},
+		{
+			name:           "获取交易数量失败",
+			address:        "0x1234567890abcdef",
+			blockParam:     "12345",
+			mockCount:      0,
+			mockError:      errors.New("failed to get transaction count"),
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody:   map[string]any{"error": "failed to get transaction count"},
+		},
+	}
+
+	// 运行测试用例
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// 创建mock service
+			mockService := new(MockBlockService)
+			if tt.address != "" {
+				mockService.On("GetTransactionCount", mock.Anything, tt.address, tt.blockParam).Return(tt.mockCount, tt.mockError)
+			}
+
+			// 创建handler
+			handler := NewBlockHandler(mockService)
+
+			// 创建gin测试环境
+			gin.SetMode(gin.TestMode)
+			w := httptest.NewRecorder()
+			c, _ := gin.CreateTestContext(w)
+
+			// 设置路由参数
+			c.Params = gin.Params{
+				{Key: "address", Value: tt.address},
+				{Key: "number", Value: tt.blockParam},
+			}
+
+			// 创建HTTP请求
+			req := httptest.NewRequest(http.MethodGet, "/api/account/"+tt.address+"/tx/count/"+tt.blockParam, nil)
+			c.Request = req
+
+			// 调用接口
+			handler.GetTransactionCount(c)
+
+			// 验证响应
+			assert.Equal(t, tt.expectedStatus, w.Code)
+
+			var response map[string]any
+			err := json.Unmarshal(w.Body.Bytes(), &response)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedBody, response)
+
+			// 验证mock调用
+			mockService.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGetBlock(t *testing.T) {
 	// 创建一个模拟的区块数据
 	mockBlock := &eth.Block{}
 

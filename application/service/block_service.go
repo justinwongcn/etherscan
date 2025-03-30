@@ -55,7 +55,7 @@ func (s *BlockService) parseBlockParameter(blockHashOrNumber string) (string, er
 		return blockHashOrNumber, nil
 	}
 	// 判断是否为特殊标识符
-	if blockHashOrNumber == "latest" || blockHashOrNumber == "earliest" || blockHashOrNumber == "pending" {
+	if blockHashOrNumber == ethereum.BlockLatest || blockHashOrNumber == ethereum.BlockEarliest || blockHashOrNumber == ethereum.BlockPending {
 		return blockHashOrNumber, nil
 	}
 
@@ -94,7 +94,7 @@ func (s *BlockService) GetBlock(ctx context.Context, blockHashOrNumber string) (
 	return s.client.GetBlockByNumber(ctx, param, true)
 }
 
-// GetTransactionCount 实现了BlockServiceInterface接口中的同名方法
+// GetBlockTransactionCount 实现了BlockServiceInterface接口中的同名方法
 // 获取指定区块中包含的交易数量
 // 参数:
 //   - ctx: 上下文对象，用于控制请求的生命周期
@@ -103,7 +103,7 @@ func (s *BlockService) GetBlock(ctx context.Context, blockHashOrNumber string) (
 // 返回:
 //   - uint64: 区块中的交易数量
 //   - error: 如果查询过程中发生错误，将返回相应的错误信息
-func (s *BlockService) GetTransactionCount(ctx context.Context, blockHashOrNumber string) (uint64, error) {
+func (s *BlockService) GetBlockTransactionCount(ctx context.Context, blockHashOrNumber string) (uint64, error) {
 	// 解析并标准化区块参数
 	param, err := s.parseBlockParameter(blockHashOrNumber)
 	if err != nil {
@@ -116,4 +116,25 @@ func (s *BlockService) GetTransactionCount(ctx context.Context, blockHashOrNumbe
 		return s.client.GetBlockTransactionCountByHash(ctx, param)
 	}
 	return s.client.GetBlockTransactionCountByNumber(ctx, param)
+}
+
+// GetTransactionCount 实现了BlockServiceInterface接口中的同名方法
+// 获取指定地址在特定区块的交易数量
+// 参数:
+//   - ctx: 上下文对象，用于控制请求的生命周期
+//   - address: 要查询的以太坊地址
+//   - blockHashOrNumber: 区块标识符，支持区块号、区块哈希和特殊标识符
+//
+// 返回:
+//   - uint64: 该地址的交易数量
+//   - error: 如果查询过程中发生错误，将返回相应的错误信息
+func (s *BlockService) GetTransactionCount(ctx context.Context, address string, blockHashOrNumber string) (uint64, error) {
+	// 解析并标准化区块参数
+	param, err := s.parseBlockParameter(blockHashOrNumber)
+	if err != nil {
+		return 0, err
+	}
+
+	// 调用以太坊客户端获取交易数量
+	return s.client.GetTransactionCount(ctx, address, param)
 }

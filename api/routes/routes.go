@@ -27,9 +27,17 @@ import (
 //  3. GET /block/count/:number/tx
 //     获取指定区块中的交易数量
 //     参数 number 支持同上
+//
+//  4. GET /account/:address/tx/count/:number
+//     获取指定地址在特定区块的交易数量
+//     参数:
+//     - address: 以太坊账户地址
+//     - number: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
+//     支持的特殊值：latest、earliest、pending
 func RegisterRoutes(r *gin.Engine, blockHandler *handler.BlockHandler) {
 	// 区块相关路由
 	r.GET("/block/height", blockHandler.GetBlockHeight)
 	r.GET("/block/:number", blockHandler.GetBlock)
-	r.GET("/block/count/:number/tx", blockHandler.GetTransactionCount)
+	r.GET("/block/count/:number", blockHandler.GetBlockTransactionCount)
+	r.GET("/account/count/:address", blockHandler.GetTransactionCount)
 }

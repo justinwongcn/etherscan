@@ -30,7 +30,8 @@ func main() {
 	// 注册路由
 	r.GET("/block/height", blockHandler.GetBlockHeight)
 	r.GET("/block/:number", blockHandler.GetBlock)
-	r.GET("/block/count/:number", blockHandler.GetTransactionCount)
+	r.GET("/block/count/:number", blockHandler.GetBlockTransactionCount)
+	r.GET("/account/count/:address", blockHandler.GetTransactionCount)
 
 	// 启动服务器
 	if err := r.Run(":8080"); err != nil {

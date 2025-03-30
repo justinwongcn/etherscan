@@ -33,12 +33,22 @@ type ClientOptions struct {
 	MaxIdleConns int           // 最大空闲连接数，用于限制连接池大小
 }
 
+// 区块参数常量定义
+const (
+	// BlockLatest 表示最新区块
+	BlockLatest = "latest"
+	// BlockEarliest 表示创世区块
+	BlockEarliest = "earliest"
+	// BlockPending 表示待打包区块
+	BlockPending = "pending"
+)
+
 // DefaultClientOptions 返回默认的客户端配置选项
 func DefaultClientOptions() *ClientOptions {
 	return &ClientOptions{
-		MaxConns:     30,         // 默认最大连接数
+		MaxConns:     30,              // 默认最大连接数
 		IdleTimeout:  3 * time.Minute, // 默认空闲超时时间
-		HealthCheck:  true,        // 默认启用健康检查
-		MaxIdleConns: 5,          // 默认最大空闲连接数
+		HealthCheck:  true,            // 默认启用健康检查
+		MaxIdleConns: 5,               // 默认最大空闲连接数
 	}
 }

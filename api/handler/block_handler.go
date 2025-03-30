@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/justinwongcn/etherscan/application/service"
+	"github.com/justinwongcn/etherscan/internal/ethereum"
 )
 
 // BlockHandler 区块处理器，负责处理与以太坊区块相关的HTTP请求
@@ -68,7 +69,7 @@ func (h *BlockHandler) GetBlock(c *gin.Context) {
 	blockParam := c.Param("number")
 	// 如果参数为空，则使用latest
 	if blockParam == "" {
-		blockParam = "latest"
+		blockParam = ethereum.BlockLatest
 	}
 
 	// 获取区块信息
@@ -86,7 +87,7 @@ func (h *BlockHandler) GetBlock(c *gin.Context) {
 	})
 }
 
-// GetTransactionCount 处理获取区块交易数量的HTTP请求
+// GetBlockTransactionCount 处理获取区块交易数量的HTTP请求
 // 请求路径: GET /block/count/:number/tx
 // 路径参数:
 //   - number: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
@@ -98,16 +99,63 @@ func (h *BlockHandler) GetBlock(c *gin.Context) {
 //
 // 错误码:
 //   - 500: 服务器内部错误（包括参数格式错误）
-func (h *BlockHandler) GetTransactionCount(c *gin.Context) {
+func (h *BlockHandler) GetBlockTransactionCount(c *gin.Context) {
 	// 从URL路径中获取区块号或哈希
 	blockParam := c.Param("number")
 	// 如果参数为空，则使用latest
 	if blockParam == "" {
-		blockParam = "latest"
+		blockParam = ethereum.BlockLatest
 	}
 
 	// 获取交易数量
-	count, err := h.blockService.GetTransactionCount(c.Request.Context(), blockParam)
+	count, err := h.blockService.GetBlockTransactionCount(c.Request.Context(), blockParam)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// 返回交易数量
+	c.JSON(http.StatusOK, gin.H{
+		"count": count,
+	})
+}
+
+// GetTransactionCount 处理获取账户交易数量的HTTP请求
+// 请求路径: GET /account/:address/count
+// 路径参数:
+//   - address: 以太坊账户地址
+//
+// 查询参数:
+//   - number: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
+//     支持的特殊值: "latest"（最新区块）、"earliest"（创世区块）、"pending"（待打包区块）
+//
+// 响应格式:
+//   - 成功: {"count": <交易数量>}
+//   - 失败: {"error": <错误信息>}
+//
+// 错误码:
+//   - 500: 服务器内部错误（包括参数格式错误）
+func (h *BlockHandler) GetTransactionCount(c *gin.Context) {
+	// 获取地址参数
+	address := c.Param("address")
+	if address == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "address is required",
+		})
+		return
+	}
+
+	// 从查询参数中获取区块号或哈希
+	blockParam := c.Query("number")
+	// 如果参数为空，则使用latest
+	if blockParam == "" {
+		blockParam = ethereum.BlockLatest
+	}
+
+	// 获取交易数量
+	count, err := h.blockService.GetTransactionCount(c.Request.Context(), address, blockParam)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
