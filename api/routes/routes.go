@@ -28,16 +28,32 @@ import (
 //     获取指定区块中的交易数量
 //     参数 number 支持同上
 //
-//  4. GET /account/:address/tx/count/:number
+//  4. GET /account/count/:address
 //     获取指定地址在特定区块的交易数量
-//     参数:
+//     路径参数:
 //     - address: 以太坊账户地址
+//     查询参数:
+//     - number: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
+//     支持的特殊值：latest（最新区块）、earliest（创世区块）、pending（待打包区块）
+//     默认值：latest
+//
+//  5. GET /tx/:hash
+//     获取指定交易哈希的交易详细信息
+//     参数:
+//     - hash: 交易哈希（32字节的十六进制字符串）
+//
+//  6. GET /block/:number/tx/:index
+//     获取指定区块中特定索引位置的交易信息
+//     参数:
 //     - number: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
 //     支持的特殊值：latest、earliest、pending
+//     - index: 交易在区块中的索引位置（从0开始的整数）
 func RegisterRoutes(r *gin.Engine, blockHandler *handler.BlockHandler) {
 	// 区块相关路由
 	r.GET("/block/height", blockHandler.GetBlockHeight)
 	r.GET("/block/:number", blockHandler.GetBlock)
 	r.GET("/block/count/:number", blockHandler.GetBlockTransactionCount)
 	r.GET("/account/count/:address", blockHandler.GetTransactionCount)
+	r.GET("/tx/:hash", blockHandler.GetTransactionByHash)
+	r.GET("/block/tx/:index", blockHandler.GetTransactionByIndex)
 }

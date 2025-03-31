@@ -48,4 +48,24 @@ type BlockServiceInterface interface {
 	//   - uint64: 该地址的交易数量
 	//   - error: 如果查询过程中发生错误，将返回相应的错误信息
 	GetTransactionCount(ctx context.Context, address string, blockHashOrNumber string) (uint64, error)
+
+	// GetTransactionByHash 根据交易哈希获取交易详细信息
+	// 参数:
+	//   - ctx: 上下文对象，用于控制请求的生命周期
+	//   - txHash: 交易哈希（32字节的十六进制字符串）
+	// 返回:
+	//   - *eth.Transaction: 包含交易完整信息的结构体指针
+	//   - error: 如果查询过程中发生错误，将返回相应的错误信息
+	GetTransactionByHash(ctx context.Context, txHash string) (*eth.Transaction, error)
+
+	// GetTransactionByIndex 根据区块标识符和交易索引获取交易详细信息
+	// 参数:
+	//   - ctx: 上下文对象，用于控制请求的生命周期
+	//   - blockHashOrNumber: 区块标识符，可以是区块号（数字字符串）或区块哈希（0x开头的十六进制字符串）
+	//     支持的特殊值："latest"（最新区块）、"earliest"（创世区块）、"pending"（待打包区块）
+	//   - index: 交易在区块中的索引位置
+	// 返回:
+	//   - *eth.Transaction: 包含交易完整信息的结构体指针
+	//   - error: 如果查询过程中发生错误，将返回相应的错误信息
+	GetTransactionByIndex(ctx context.Context, blockHashOrNumber string, index uint64) (*eth.Transaction, error)
 }

@@ -32,6 +32,8 @@ func main() {
 	r.GET("/block/:number", blockHandler.GetBlock)
 	r.GET("/block/count/:number", blockHandler.GetBlockTransactionCount)
 	r.GET("/account/count/:address", blockHandler.GetTransactionCount)
+	r.GET("/tx/:hash", blockHandler.GetTransactionByHash)
+	r.GET("/block/tx/:index", blockHandler.GetTransactionByIndex)
 
 	// 启动服务器
 	if err := r.Run(":8080"); err != nil {

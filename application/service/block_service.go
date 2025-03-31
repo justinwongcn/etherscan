@@ -138,3 +138,42 @@ func (s *BlockService) GetTransactionCount(ctx context.Context, address string, 
 	// 调用以太坊客户端获取交易数量
 	return s.client.GetTransactionCount(ctx, address, param)
 }
+
+// GetTransactionByHash 实现了BlockServiceInterface接口中的同名方法
+// 根据交易哈希获取交易的详细信息
+// 参数:
+//   - ctx: 上下文对象，用于控制请求的生命周期
+//   - txHash: 交易哈希（32字节的十六进制字符串）
+//
+// 返回:
+//   - *eth.Transaction: 包含交易完整信息的结构体指针
+//   - error: 如果查询过程中发生错误，将返回相应的错误信息
+func (s *BlockService) GetTransactionByHash(ctx context.Context, txHash string) (*eth.Transaction, error) {
+	// 调用以太坊客户端获取交易信息
+	return s.client.GetTransactionByHash(ctx, txHash)
+}
+
+// GetTransactionByIndex 实现了BlockServiceInterface接口中的同名方法
+// 根据区块标识符和交易索引获取交易详细信息
+// 参数:
+//   - ctx: 上下文对象，用于控制请求的生命周期
+//   - blockHashOrNumber: 区块标识符，支持区块号、区块哈希和特殊标识符
+//   - index: 交易在区块中的索引位置
+//
+// 返回:
+//   - *eth.Transaction: 包含交易完整信息的结构体指针
+//   - error: 如果查询过程中发生错误，将返回相应的错误信息
+func (s *BlockService) GetTransactionByIndex(ctx context.Context, blockHashOrNumber string, index uint64) (*eth.Transaction, error) {
+	// 解析并标准化区块参数
+	param, err := s.parseBlockParameter(blockHashOrNumber)
+	if err != nil {
+		return nil, err
+	}
+
+	// 根据参数类型选择适当的查询方法
+	// 如果是区块哈希（以0x开头且长度大于10的十六进制字符串）
+	if len(param) >= 2 && param[:2] == "0x" && len(param) > 10 {
+		return s.client.GetTransactionByBlockHashAndIndex(ctx, param, index)
+	}
+	return s.client.GetTransactionByBlockNumberAndIndex(ctx, param, index)
+}
