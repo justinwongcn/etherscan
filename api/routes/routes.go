@@ -42,12 +42,26 @@ import (
 //     参数:
 //     - hash: 交易哈希（32字节的十六进制字符串）
 //
-//  6. GET /block/:number/tx/:index
+//  6. GET /tx/:hash/receipt
+//     获取指定交易的收据信息
+//     参数:
+//     - hash: 交易哈希（32字节的十六进制字符串）
+//     返回:
+//     - 交易收据信息，包含交易哈希、区块信息、gas使用情况、合约地址、日志等
+//
+//  7. GET /block/:number/tx/:index
 //     获取指定区块中特定索引位置的交易信息
 //     参数:
 //     - number: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
 //     支持的特殊值：latest、earliest、pending
 //     - index: 交易在区块中的索引位置（从0开始的整数）
+//
+//  8. POST /tx/send
+//     发送已签名的交易数据到以太坊网络
+//     请求体:
+//     - signedTxData: 已签名的交易数据（十六进制格式，以0x开头）
+//     返回:
+//     - txHash: 交易哈希（32字节的十六进制字符串）
 func RegisterRoutes(r *gin.Engine, blockHandler *handler.BlockHandler) {
 	// 区块相关路由
 	r.GET("/block/height", blockHandler.GetBlockHeight)
@@ -55,5 +69,7 @@ func RegisterRoutes(r *gin.Engine, blockHandler *handler.BlockHandler) {
 	r.GET("/block/count/:number", blockHandler.GetBlockTransactionCount)
 	r.GET("/account/count/:address", blockHandler.GetTransactionCount)
 	r.GET("/tx/:hash", blockHandler.GetTransactionByHash)
+	r.GET("/tx/:hash/receipt", blockHandler.GetTransactionReceipt)
 	r.GET("/block/tx/:index", blockHandler.GetTransactionByIndex)
+	r.POST("/tx/send", blockHandler.SendRawTransaction)
 }

@@ -253,3 +253,76 @@ func (h *BlockHandler) GetTransactionCount(c *gin.Context) {
 		"count": count,
 	})
 }
+
+// SendRawTransactionRequest 定义了发送已签名交易的请求结构
+type SendRawTransactionRequest struct {
+	SignedTxData string `json:"signedTxData" binding:"required"`
+}
+
+// SendRawTransaction 处理发送已签名交易的HTTP请求
+// 请求路径: POST /tx/send
+// 请求体:
+//   - signedTxData: 已签名的交易数据（十六进制格式，以0x开头）
+//
+// 响应格式:
+//   - 成功: {"txHash": <交易哈希>}
+//   - 失败: {"error": <错误信息>}
+//
+// 错误码:
+//   - 400: 请求体格式错误或参数无效
+//   - 500: 服务器内部错误
+func (h *BlockHandler) SendRawTransaction(c *gin.Context) {
+	var req SendRawTransactionRequest
+
+	// 绑定并验证请求体
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})
+		return
+	}
+
+	// 调用服务层发送交易
+	txHash, err := h.blockService.SendRawTransaction(c.Request.Context(), req.SignedTxData)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 返回交易哈希
+	c.JSON(http.StatusOK, gin.H{"txHash": txHash})
+}
+
+// GetTransactionReceipt 处理获取交易收据的HTTP请求
+// 请求路径: GET /tx/:hash/receipt
+// 路径参数:
+//   - hash: 交易哈希（32字节的十六进制字符串）
+//
+// 响应格式:
+//   - 成功: {"receipt": <交易收据信息>}
+//   - 失败: {"error": <错误信息>}
+//
+// 错误码:
+//   - 500: 服务器内部错误（包括参数格式错误）
+func (h *BlockHandler) GetTransactionReceipt(c *gin.Context) {
+	// 获取交易哈希参数
+	txHash := c.Param("hash")
+	if txHash == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": "transaction hash is required",
+		})
+		return
+	}
+
+	// 获取交易收据信息
+	receipt, err := h.blockService.GetTransactionReceipt(c.Request.Context(), txHash)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	// 返回交易收据信息
+	c.JSON(http.StatusOK, gin.H{
+		"receipt": receipt,
+	})
+}

@@ -177,3 +177,31 @@ func (s *BlockService) GetTransactionByIndex(ctx context.Context, blockHashOrNum
 	}
 	return s.client.GetTransactionByBlockNumberAndIndex(ctx, param, index)
 }
+
+// SendRawTransaction 实现了BlockServiceInterface接口中的同名方法
+// 发送已签名的交易数据到以太坊网络
+// 参数:
+//   - ctx: 上下文对象，用于控制请求的生命周期
+//   - signedTxData: 已签名的交易数据（十六进制格式，以0x开头）
+//
+// 返回:
+//   - string: 交易哈希（32字节的十六进制字符串）
+//   - error: 如果发送过程中发生错误，将返回相应的错误信息
+func (s *BlockService) SendRawTransaction(ctx context.Context, signedTxData string) (string, error) {
+	// 调用以太坊客户端发送交易
+	return s.client.SendRawTransaction(ctx, signedTxData)
+}
+
+// GetTransactionReceipt 实现了BlockServiceInterface接口中的同名方法
+// 获取交易的收据信息
+// 参数:
+//   - ctx: 上下文对象，用于控制请求的生命周期
+//   - txHash: 交易哈希（32字节的十六进制字符串）
+//
+// 返回:
+//   - *eth.TransactionReceipt: 交易收据信息，包含交易哈希、区块信息、gas使用情况、合约地址、日志等
+//   - error: 如果查询过程中发生错误，将返回相应的错误信息
+func (s *BlockService) GetTransactionReceipt(ctx context.Context, txHash string) (*eth.TransactionReceipt, error) {
+	// 调用以太坊客户端获取交易收据
+	return s.client.GetTransactionReceipt(ctx, txHash)
+}

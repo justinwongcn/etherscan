@@ -68,4 +68,22 @@ type BlockServiceInterface interface {
 	//   - *eth.Transaction: 包含交易完整信息的结构体指针
 	//   - error: 如果查询过程中发生错误，将返回相应的错误信息
 	GetTransactionByIndex(ctx context.Context, blockHashOrNumber string, index uint64) (*eth.Transaction, error)
+
+	// SendRawTransaction 发送已签名的交易数据到以太坊网络
+	// 参数:
+	//   - ctx: 上下文对象，用于控制请求的生命周期
+	//   - signedTxData: 已签名的交易数据（十六进制格式，以0x开头）
+	// 返回:
+	//   - string: 交易哈希（32字节的十六进制字符串）
+	//   - error: 如果发送过程中发生错误，将返回相应的错误信息
+	SendRawTransaction(ctx context.Context, signedTxData string) (string, error)
+
+	// GetTransactionReceipt 获取交易收据信息
+	// 参数:
+	//   - ctx: 上下文对象，用于控制请求的生命周期
+	//   - txHash: 交易哈希（32字节的十六进制字符串）
+	// 返回:
+	//   - *eth.TransactionReceipt: 交易收据信息，包含交易哈希、区块信息、gas使用情况、合约地址、日志等
+	//   - error: 如果查询过程中发生错误，将返回相应的错误信息
+	GetTransactionReceipt(ctx context.Context, txHash string) (*eth.TransactionReceipt, error)
 }
