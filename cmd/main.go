@@ -33,6 +33,7 @@ func main() {
 	r.GET("/block/count/:number", blockHandler.GetBlockTransactionCount)
 	r.GET("/account/count/:address", blockHandler.GetTransactionCount)
 	r.GET("/tx/:hash", blockHandler.GetTransactionByHash)
+	r.GET("/tx/:hash/receipt", blockHandler.GetTransactionReceipt)
 	r.GET("/block/tx/:index", blockHandler.GetTransactionByIndex)
 	r.POST("/tx/send", blockHandler.SendRawTransaction)
 
