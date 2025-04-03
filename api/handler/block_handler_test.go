@@ -13,6 +13,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/justinwongcn/etherscan/application/service"
+	"github.com/justinwongcn/etherscan/domain"
 	"github.com/justinwongcn/go-ethlibs/eth"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
@@ -33,9 +34,9 @@ func (m *MockBlockService) GetLatestBlockHeight(ctx context.Context) (uint64, er
 }
 
 // GetBlock mock实现
-func (m *MockBlockService) GetBlock(ctx context.Context, blockHashOrNumber string) (*eth.Block, error) {
+func (m *MockBlockService) GetBlock(ctx context.Context, blockHashOrNumber string) (*domain.Block, error) {
 	args := m.Called(ctx, blockHashOrNumber)
-	if block, ok := args.Get(0).(*eth.Block); ok {
+	if block, ok := args.Get(0).(*domain.Block); ok {
 		return block, args.Error(1)
 	}
 	return nil, args.Error(1)

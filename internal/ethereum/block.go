@@ -3,6 +3,7 @@ package ethereum
 import (
 	"context"
 	"fmt"
+
 	"github.com/justinwongcn/go-ethlibs/eth"
 	"github.com/justinwongcn/go-ethlibs/node"
 )

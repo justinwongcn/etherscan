@@ -3,6 +3,7 @@ package ethereum
 import (
 	"context"
 	"fmt"
+
 	"github.com/justinwongcn/go-ethlibs/eth"
 	"github.com/justinwongcn/go-ethlibs/node"
 )
@@ -201,4 +202,3 @@ func (c *Client) GetTransactionReceipt(ctx context.Context, txHash string) (*eth
 
 	return result.(*eth.TransactionReceipt), nil
 }
-

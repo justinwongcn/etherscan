@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/justinwongcn/etherscan/domain"
 	"github.com/justinwongcn/etherscan/internal/ethereum"
 	"github.com/justinwongcn/go-ethlibs/eth"
 )
@@ -77,9 +78,9 @@ func (s *BlockService) parseBlockParameter(blockHashOrNumber string) (string, er
 //   - blockHashOrNumber: 区块标识符，支持区块号、区块哈希和特殊标识符
 //
 // 返回:
-//   - *eth.Block: 包含区块完整信息的结构体指针
+//   - *domain.Block: 包含区块完整信息的领域模型指针
 //   - error: 如果查询过程中发生错误，将返回相应的错误信息
-func (s *BlockService) GetBlock(ctx context.Context, blockHashOrNumber string) (*eth.Block, error) {
+func (s *BlockService) GetBlock(ctx context.Context, blockHashOrNumber string) (*domain.Block, error) {
 	// 解析并标准化区块参数
 	param, err := s.parseBlockParameter(blockHashOrNumber)
 	if err != nil {
@@ -88,10 +89,19 @@ func (s *BlockService) GetBlock(ctx context.Context, blockHashOrNumber string) (
 
 	// 根据参数类型选择适当的查询方法
 	// 如果是区块哈希（以0x开头且长度大于10的十六进制字符串）
+	var ethBlock *eth.Block
 	if len(param) >= 2 && param[:2] == "0x" && len(param) > 10 {
-		return s.client.GetBlockByHash(ctx, param, true)
+		ethBlock, err = s.client.GetBlockByHash(ctx, param, true)
+	} else {
+		ethBlock, err = s.client.GetBlockByNumber(ctx, param, true)
 	}
-	return s.client.GetBlockByNumber(ctx, param, true)
+	if err != nil {
+		return nil, err
+	}
+
+	// 使用BlockConverter将以太坊区块转换为领域模型
+	converter := domain.NewBlockConverter()
+	return converter.ConvertToBlock(ethBlock), nil
 }
 
 // GetBlockTransactionCount 实现了BlockServiceInterface接口中的同名方法

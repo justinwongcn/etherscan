@@ -4,6 +4,7 @@ package service
 import (
 	"context"
 
+	"github.com/justinwongcn/etherscan/domain"
 	"github.com/justinwongcn/go-ethlibs/eth"
 )
 
@@ -24,9 +25,9 @@ type BlockServiceInterface interface {
 	//   - blockHashOrNumber: 区块标识符，可以是区块号（数字字符串）或区块哈希（0x开头的十六进制字符串）
 	//     支持的特殊值："latest"（最新区块）、"earliest"（创世区块）、"pending"（待打包区块）
 	// 返回:
-	//   - *eth.Block: 包含区块完整信息的结构体指针
+	//   - *domain.Block: 包含区块完整信息的领域模型指针
 	//   - error: 如果查询过程中发生错误，将返回相应的错误信息
-	GetBlock(ctx context.Context, blockHashOrNumber string) (*eth.Block, error)
+	GetBlock(ctx context.Context, blockHashOrNumber string) (*domain.Block, error)
 
 	// GetBlockTransactionCount 获取指定区块中的交易数量
 	// 参数:
