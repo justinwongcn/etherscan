@@ -62,14 +62,16 @@ import (
 //     - signedTxData: 已签名的交易数据（十六进制格式，以0x开头）
 //     返回:
 //     - txHash: 交易哈希（32字节的十六进制字符串）
-func RegisterRoutes(r *gin.Engine, blockHandler *handler.BlockHandler) {
+func RegisterRoutes(r *gin.Engine, blockHandler *handler.BlockHandler, transactionHandler *handler.TransactionHandler) {
 	// 区块相关路由
 	r.GET("/block/height", blockHandler.GetBlockHeight)
 	r.GET("/block/:number", blockHandler.GetBlock)
 	r.GET("/block/count/:number", blockHandler.GetBlockTransactionCount)
-	r.GET("/account/count/:address", blockHandler.GetTransactionCount)
-	r.GET("/tx/:hash", blockHandler.GetTransactionByHash)
-	r.GET("/tx/:hash/receipt", blockHandler.GetTransactionReceipt)
-	r.GET("/block/tx/:index", blockHandler.GetTransactionByIndex)
-	r.POST("/tx/send", blockHandler.SendRawTransaction)
+
+	// 交易相关路由
+	r.GET("/account/count/:address", transactionHandler.GetTransactionCount)
+	r.GET("/tx/:hash", transactionHandler.GetTransactionByHash)
+	r.GET("/tx/:hash/receipt", transactionHandler.GetTransactionReceipt)
+	r.GET("/block/tx/:index", transactionHandler.GetTransactionByIndex)
+	r.POST("/tx/send", transactionHandler.SendRawTransaction)
 }

@@ -20,22 +20,26 @@ func main() {
 
 	// 初始化服务层
 	blockService := service.NewBlockService(client)
+	transactionService := service.NewTransactionService(client)
 
 	// 初始化处理器
 	blockHandler := handler.NewBlockHandler(blockService)
+	transactionHandler := handler.NewTransactionHandler(transactionService)
 
 	// 设置Gin路由
 	r := gin.Default()
 
-	// 注册路由
+	// 注册区块相关路由
 	r.GET("/block/height", blockHandler.GetBlockHeight)
 	r.GET("/block/:number", blockHandler.GetBlock)
 	r.GET("/block/count/:number", blockHandler.GetBlockTransactionCount)
-	r.GET("/account/count/:address", blockHandler.GetTransactionCount)
-	r.GET("/tx/:hash", blockHandler.GetTransactionByHash)
-	r.GET("/tx/:hash/receipt", blockHandler.GetTransactionReceipt)
-	r.GET("/block/tx/:index", blockHandler.GetTransactionByIndex)
-	r.POST("/tx/send", blockHandler.SendRawTransaction)
+
+	// 注册交易相关路由
+	r.GET("/account/count/:address", transactionHandler.GetTransactionCount)
+	r.GET("/tx/:hash", transactionHandler.GetTransactionByHash)
+	r.GET("/tx/:hash/receipt", transactionHandler.GetTransactionReceipt)
+	r.GET("/block/tx/:index", transactionHandler.GetTransactionByIndex)
+	r.POST("/tx/send", transactionHandler.SendRawTransaction)
 
 	// 启动服务器
 	if err := r.Run(":8080"); err != nil {

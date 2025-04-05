@@ -38,8 +38,12 @@ func NewBlockService(client *ethereum.Client) *BlockService {
 // 返回:
 //   - uint64: 最新区块的高度编号
 //   - error: 如果查询过程中发生错误，将返回相应的错误信息
-func (s *BlockService) GetLatestBlockHeight(ctx context.Context) (uint64, error) {
-	return s.client.GetLatestBlockNumber(ctx)
+func (s *BlockService) GetLatestBlockHeight(ctx context.Context) (string, error) {
+	height, err := s.client.GetLatestBlockNumber(ctx)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%d", height), nil
 }
 
 // parseBlockParameter 解析并标准化区块参数格式
@@ -82,7 +86,7 @@ func (s *BlockService) parseBlockParameter(blockHashOrNumber string) (string, er
 //   - error: 如果查询过程中发生错误，将返回相应的错误信息
 func (s *BlockService) GetBlock(ctx context.Context, blockHashOrNumber string) (*domain.Block, error) {
 	// 解析并标准化区块参数
-	param, err := s.parseBlockParameter(blockHashOrNumber)
+	param, err := ethereum.ParseBlockParameter(blockHashOrNumber)
 	if err != nil {
 		return nil, err
 	}
@@ -113,19 +117,25 @@ func (s *BlockService) GetBlock(ctx context.Context, blockHashOrNumber string) (
 // 返回:
 //   - uint64: 区块中的交易数量
 //   - error: 如果查询过程中发生错误，将返回相应的错误信息
-func (s *BlockService) GetBlockTransactionCount(ctx context.Context, blockHashOrNumber string) (uint64, error) {
+func (s *BlockService) GetBlockTransactionCount(ctx context.Context, blockHashOrNumber string) (string, error) {
 	// 解析并标准化区块参数
 	param, err := s.parseBlockParameter(blockHashOrNumber)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
 	// 根据参数类型选择适当的查询方法
 	// 如果是区块哈希（以0x开头且长度大于10的十六进制字符串）
+	var count uint64
 	if len(param) >= 2 && param[:2] == "0x" && len(param) > 10 {
-		return s.client.GetBlockTransactionCountByHash(ctx, param)
+		count, err = s.client.GetBlockTransactionCountByHash(ctx, param)
+	} else {
+		count, err = s.client.GetBlockTransactionCountByNumber(ctx, param)
 	}
-	return s.client.GetBlockTransactionCountByNumber(ctx, param)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%d", count), nil
 }
 
 // GetTransactionCount 实现了BlockServiceInterface接口中的同名方法
@@ -138,15 +148,19 @@ func (s *BlockService) GetBlockTransactionCount(ctx context.Context, blockHashOr
 // 返回:
 //   - uint64: 该地址的交易数量
 //   - error: 如果查询过程中发生错误，将返回相应的错误信息
-func (s *BlockService) GetTransactionCount(ctx context.Context, address string, blockHashOrNumber string) (uint64, error) {
+func (s *BlockService) GetTransactionCount(ctx context.Context, address string, blockHashOrNumber string) (string, error) {
 	// 解析并标准化区块参数
 	param, err := s.parseBlockParameter(blockHashOrNumber)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 
 	// 调用以太坊客户端获取交易数量
-	return s.client.GetTransactionCount(ctx, address, param)
+	count, err := s.client.GetTransactionCount(ctx, address, param)
+	if err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%d", count), nil
 }
 
 // GetTransactionByHash 实现了BlockServiceInterface接口中的同名方法

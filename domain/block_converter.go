@@ -31,16 +31,44 @@ func NewBlockConverter() *BlockConverter {
 // 返回:
 //   - *Block: 转换后的区块领域模型，包含所有必要的区块信息
 func (c *BlockConverter) ConvertToBlock(ethBlock *eth.Block) *Block {
+	if ethBlock == nil {
+		return nil
+	}
 	// 转换基本字段
-	// 将uint64和string类型的字段进行基础转换
-	number := ethBlock.Number.UInt64()
+	// 将string和string类型的字段进行基础转换
+	number := ethBlock.Number.Big().String()
 	hash := ethBlock.Hash.String()
-	baseFeePerGas := ethBlock.BaseFeePerGas.UInt64()
-	withdrawalsRoot := ethBlock.WithdrawalsRoot.String()
-	excessBlobGas := ethBlock.ExcessBlobGas.UInt64()
-	blobGasUsed := ethBlock.BlobGasUsed.UInt64()
-	nonce := ethBlock.Nonce.String()
-	mixHash := ethBlock.MixHash.String()
+
+	// 处理可选字段，添加nil检查
+	var baseFeePerGas string
+	if ethBlock.BaseFeePerGas != nil {
+		baseFeePerGas = ethBlock.BaseFeePerGas.Big().String()
+	}
+
+	var withdrawalsRoot string
+	if ethBlock.WithdrawalsRoot != nil {
+		withdrawalsRoot = ethBlock.WithdrawalsRoot.String()
+	}
+
+	var excessBlobGas string
+	if ethBlock.ExcessBlobGas != nil {
+		excessBlobGas = ethBlock.ExcessBlobGas.Big().String()
+	}
+
+	var blobGasUsed string
+	if ethBlock.BlobGasUsed != nil {
+		blobGasUsed = ethBlock.BlobGasUsed.Big().String()
+	}
+
+	var nonce string
+	if ethBlock.Nonce != nil {
+		nonce = ethBlock.Nonce.String()
+	}
+
+	var mixHash string
+	if ethBlock.MixHash != nil {
+		mixHash = ethBlock.MixHash.String()
+	}
 
 	// 并发处理SealFields
 	// 使用goroutine和互斥锁实现并发安全的字符串转换
@@ -80,13 +108,13 @@ func (c *BlockConverter) ConvertToBlock(ethBlock *eth.Block) *Block {
 		ReceiptsRoot:          ethBlock.ReceiptsRoot.String(),
 		Miner:                 ethBlock.Miner.String(),
 		Author:                ethBlock.Author.String(),
-		Difficulty:            ethBlock.Difficulty.UInt64(),
-		TotalDifficulty:       ethBlock.TotalDifficulty.Big().Uint64(),
+		Difficulty:            ethBlock.Difficulty.Big().String(),
+		TotalDifficulty:       ethBlock.TotalDifficulty.Big().String(),
 		ExtraData:             ethBlock.ExtraData.String(),
-		Size:                  ethBlock.Size.UInt64(),
-		GasLimit:              ethBlock.GasLimit.UInt64(),
-		GasUsed:               ethBlock.GasUsed.UInt64(),
-		Timestamp:             ethBlock.Timestamp.UInt64(),
+		Size:                  ethBlock.Size.Big().String(),
+		GasLimit:              ethBlock.GasLimit.Big().String(),
+		GasUsed:               ethBlock.GasUsed.Big().String(),
+		Timestamp:             ethBlock.Timestamp.Big().String(),
 		Transactions:          ethBlock.Transactions,
 		Uncles:                ethBlock.Uncles,
 		BaseFeePerGas:         &baseFeePerGas,
