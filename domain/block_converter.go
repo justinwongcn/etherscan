@@ -7,6 +7,24 @@ import (
 	"github.com/justinwongcn/go-ethlibs/eth"
 )
 
+// convertTransactions 将eth.TxOrHash切片转换为domain.TxOrHash切片
+func (c *BlockConverter) convertTransactions(ethTxs []eth.TxOrHash) []TxOrHash {
+	if ethTxs == nil {
+		return nil
+	}
+
+	txs := make([]TxOrHash, len(ethTxs))
+	for i, ethTx := range ethTxs {
+		txs[i] = TxOrHash{
+			Transaction: Transaction{
+				Hash: ethTx.Hash,
+			},
+			Populated: false,
+		}
+	}
+	return txs
+}
+
 // BlockConverter 提供以太坊区块数据到领域模型的转换服务
 // 该结构体负责将以太坊原生区块数据转换为应用程序使用的领域模型
 // 转换过程包括数据类型转换、字段映射以及并发处理等操作
@@ -115,7 +133,7 @@ func (c *BlockConverter) ConvertToBlock(ethBlock *eth.Block) *Block {
 		GasLimit:              ethBlock.GasLimit.Big().String(),
 		GasUsed:               ethBlock.GasUsed.Big().String(),
 		Timestamp:             ethBlock.Timestamp.Big().String(),
-		Transactions:          ethBlock.Transactions,
+		Transactions:          c.convertTransactions(ethBlock.Transactions),
 		Uncles:                ethBlock.Uncles,
 		BaseFeePerGas:         &baseFeePerGas,
 		WithdrawalsRoot:       &withdrawalsRoot,

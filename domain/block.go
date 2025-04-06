@@ -42,7 +42,7 @@ type Block struct {
 	// Timestamp 区块时间戳，Unix时间戳格式
 	Timestamp string `json:"timestamp"`
 	// Transactions 区块包含的所有交易
-	Transactions []eth.TxOrHash `json:"transactions"`
+	Transactions []TxOrHash `json:"transactions"`
 	// Uncles 叔块哈希列表
 	Uncles []eth.Hash `json:"uncles"`
 
@@ -80,6 +80,11 @@ type Block struct {
 	// Parity客户端特有字段
 	// SealFields 区块密封字段列表
 	SealFields *[]string `json:"sealFields,omitempty"`
+}
+
+type TxOrHash struct {
+	Transaction
+	Populated bool `json:"-"`
 }
 
 // Withdrawal 表示提款操作的领域模型
