@@ -2,51 +2,33 @@
 package domain
 
 import (
+	"runtime"
 	"sync"
 
 	"github.com/justinwongcn/go-ethlibs/eth"
+	"github.com/justinwongcn/etherscan/pkg/parallel"
 )
-
-// convertTransactions 将eth.TxOrHash切片转换为domain.TxOrHash切片
-// 如果 fullTx 为 true，则转换完整的交易信息
-// 如果 fullTx 为 false，则只转换交易哈希
-func (c *BlockConverter) convertTransactions(ethTxs []eth.TxOrHash, fullTx bool) any {
-	if ethTxs == nil {
-		return nil
-	}
-
-	if fullTx {
-		// 如果需要完整交易信息，返回TxOrHash切片
-		txs := make([]TxOrHash, len(ethTxs))
-		txConverter := NewTransactionConverter()
-
-		for i, ethTx := range ethTxs {
-			txs[i] = TxOrHash{
-				Transaction: *txConverter.ConvertToTransaction(&ethTx.Transaction),
-				Populated: true,
-			}
-		}
-		return txs
-	} else {
-		// 如果只需要哈希，返回字符串切片
-		hashes := make([]string, len(ethTxs))
-		for i, ethTx := range ethTxs {
-			hashes[i] = ethTx.Hash.String()
-		}
-		return hashes
-	}
-}
 
 // BlockConverter 提供以太坊区块数据到领域模型的转换服务
 // 该结构体负责将以太坊原生区块数据转换为应用程序使用的领域模型
 // 转换过程包括数据类型转换、字段映射以及并发处理等操作
-type BlockConverter struct{}
+type BlockConverter struct {
+    threshold int // 并发处理的阈值
+}
 
 // NewBlockConverter 创建一个新的区块转换器实例
+// 参数:
+//   - threshold: 并发处理的阈值，当数据量小于此值时使用普通循环处理
+//
 // 返回:
 //   - *BlockConverter: 区块转换器实例
-func NewBlockConverter() *BlockConverter {
-	return &BlockConverter{}
+func NewBlockConverter(threshold int) *BlockConverter {
+    if threshold <= 0 {
+        threshold = 50 // 默认阈值
+    }
+    return &BlockConverter{
+        threshold: threshold,
+    }
 }
 
 // ConvertToBlock 将以太坊区块数据转换为领域模型
@@ -101,30 +83,13 @@ func (c *BlockConverter) ConvertToBlock(ethBlock *eth.Block, fullTx bool) *Block
 		mixHash = ethBlock.MixHash.String()
 	}
 
-	// 并发处理SealFields
-	// 使用goroutine和互斥锁实现并发安全的字符串转换
-	var sealFields []string
-	if ethBlock.SealFields != nil {
-		lenSealFields := len(*ethBlock.SealFields)
-		sealFields = make([]string, lenSealFields)
-
-		var wg sync.WaitGroup
-		wg.Add(lenSealFields)
-
-		var mu sync.Mutex
-		for i, field := range *ethBlock.SealFields {
-			go func(index int, f eth.Data) {
-				defer wg.Done()
-
-				str := f.String()
-				mu.Lock()
-				sealFields[index] = str
-				mu.Unlock()
-			}(i, field)
-		}
-
-		wg.Wait()
+	var parentBeaconBlockRoot string
+	if ethBlock.ParentBeaconBlockRoot != nil {
+		parentBeaconBlockRoot = ethBlock.ParentBeaconBlockRoot.String()
 	}
+
+	// 处理SealFields
+	sealFields := c.convertSealFields(ethBlock.SealFields)
 
 	// 构建并返回领域模型
 	// 将所有转换后的字段组装成Block结构体
@@ -147,11 +112,11 @@ func (c *BlockConverter) ConvertToBlock(ethBlock *eth.Block, fullTx bool) *Block
 		GasUsed:               ethBlock.GasUsed.Big().String(),
 		Timestamp:             ethBlock.Timestamp.Big().String(),
 		Transactions:          c.convertTransactions(ethBlock.Transactions, fullTx),
-		Uncles:                ethBlock.Uncles,
+		Uncles:                c.convertUncles(ethBlock.Uncles),
 		BaseFeePerGas:         &baseFeePerGas,
 		WithdrawalsRoot:       &withdrawalsRoot,
-		Withdrawals:           ethBlock.Withdrawals,
-		ParentBeaconBlockRoot: ethBlock.ParentBeaconBlockRoot,
+		Withdrawals:           c.convertWithdrawals(ethBlock.Withdrawals),
+		ParentBeaconBlockRoot: &parentBeaconBlockRoot,
 		ExcessBlobGas:         &excessBlobGas,
 		BlobGasUsed:           &blobGasUsed,
 		Nonce:                 &nonce,
@@ -160,4 +125,103 @@ func (c *BlockConverter) ConvertToBlock(ethBlock *eth.Block, fullTx bool) *Block
 		Signature:             ethBlock.Signature,
 		SealFields:            &sealFields,
 	}
+}
+
+// 通用的并发处理函数
+type converter[T any, R any] func(T) R
+
+func processInParallel[T any, R any](items []T, conv converter[T, R], threshold int) []R {
+    if items == nil {
+        return nil
+    }
+
+    result := make([]R, len(items))
+    
+    // 小数据量使用普通循环
+    if len(items) < threshold {
+        for i, item := range items {
+            result[i] = conv(item)
+        }
+        return result
+    }
+
+    // 并发处理配置
+    workers := runtime.NumCPU()
+    chunkSize := (len(items) + workers - 1) / workers
+
+    var wg sync.WaitGroup
+    wg.Add(workers)
+
+    // 启动多个goroutine并行处理数据
+    for i := range workers {
+        start := i * chunkSize
+        end := min(start+chunkSize, len(items))
+
+        go func(start, end int) {
+            defer wg.Done()
+            for i := start; i < end; i++ {
+                result[i] = conv(items[i])
+            }
+        }(start, end)
+    }
+
+    wg.Wait()
+    return result
+}
+
+// convertTransactions 将eth.TxOrHash切片转换为domain.TxOrHash切片或交易哈希切片
+func (c *BlockConverter) convertTransactions(ethTxs []eth.TxOrHash, fullTx bool) any {
+    if ethTxs == nil {
+        return nil
+    }
+
+    if !fullTx {
+        // 只返回交易哈希
+        return parallel.Process(ethTxs, 
+            func(tx eth.TxOrHash) string { return tx.Hash.String() },
+            c.threshold)
+    }
+
+    // 返回完整交易信息
+    txConverter := NewTransactionConverter()
+    return parallel.Process(ethTxs,
+        func(tx eth.TxOrHash) TxOrHash {
+            return TxOrHash{
+                Transaction: *txConverter.ConvertToTransaction(&tx.Transaction),
+                Populated:   true,
+            }
+        },
+        c.threshold)
+}
+
+// convertUncles 将eth.Hash切片转换为字符串切片
+func (c *BlockConverter) convertUncles(uncles []eth.Hash) []string {
+    return processInParallel(uncles,
+        func(uncle eth.Hash) string { return uncle.String() },
+        c.threshold)
+}
+
+// convertWithdrawals 将eth.Withdrawal切片转换为domain.Withdrawal切片
+func (c *BlockConverter) convertWithdrawals(withdrawals []eth.Withdrawal) []Withdrawal {
+    return processInParallel(withdrawals,
+        func(w eth.Withdrawal) Withdrawal {
+            return Withdrawal{
+                Index:          w.Index.Big().String(),
+                ValidatorIndex: w.ValidatorIndex.Big().String(),
+                Address:        w.Address.String(),
+                Amount:         w.Amount.Big().String(),
+            }
+        },
+        c.threshold)
+}
+
+// convertSealFields 将eth.SealFields切片转换为字符串切片
+func (c *BlockConverter) convertSealFields(sealFields *[]eth.Data) []string {
+    if sealFields == nil {
+        return nil
+    }
+    
+    return processInParallel(*sealFields,
+        func(field eth.Data) string { return field.String() },
+        c.threshold)
 }

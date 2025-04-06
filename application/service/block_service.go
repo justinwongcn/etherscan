@@ -105,7 +105,7 @@ func (s *BlockService) GetBlock(ctx context.Context, blockHashOrNumber string, f
 	}
 
 	// 使用BlockConverter将以太坊区块转换为领域模型
-	converter := domain.NewBlockConverter()
+	converter := domain.NewBlockConverter(50)
 	return converter.ConvertToBlock(ethBlock, fullTx), nil
 }
 

@@ -1,10 +1,6 @@
 // Package domain 定义了以太坊区块链的核心领域模型
 package domain
 
-import (
-	"github.com/justinwongcn/go-ethlibs/eth"
-)
-
 // Block 表示以太坊区块的领域模型
 type Block struct {
 	// Number 区块高度，表示该区块在区块链中的序号位置
@@ -46,7 +42,7 @@ type Block struct {
 	// 当fullTx为false时，类型为[]string，只包含交易哈希
 	Transactions any `json:"transactions"`
 	// Uncles 叔块哈希列表
-	Uncles []eth.Hash `json:"uncles"`
+	Uncles []string `json:"uncles"`
 
 	// EIP-1559 BaseFeePerGas 基础费用，伦敦硬分叉后引入的动态基础费用
 	BaseFeePerGas *string `json:"baseFeePerGas,omitempty"`
@@ -55,11 +51,11 @@ type Block struct {
 	// WithdrawalsRoot 提款操作的默克尔树根哈希值
 	WithdrawalsRoot *string `json:"withdrawalsRoot,omitempty"`
 	// Withdrawals 区块中包含的所有提款操作列表
-	Withdrawals []eth.Withdrawal `json:"withdrawals,omitempty"`
+	Withdrawals []Withdrawal `json:"withdrawals,omitempty"`
 
 	// EIP-4788 信标链相关字段
 	// ParentBeaconBlockRoot 父信标链区块的根哈希值
-	ParentBeaconBlockRoot *eth.Hash `json:"parentBeaconBlockRoot,omitempty"`
+	ParentBeaconBlockRoot *string `json:"parentBeaconBlockRoot,omitempty"`
 
 	// EIP-4844 Blob相关字段
 	// ExcessBlobGas 超额Blob燃料值
