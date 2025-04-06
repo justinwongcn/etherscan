@@ -7,6 +7,36 @@ import (
 	"github.com/justinwongcn/go-ethlibs/eth"
 )
 
+// convertTransactions 将eth.TxOrHash切片转换为domain.TxOrHash切片
+// 如果 fullTx 为 true，则转换完整的交易信息
+// 如果 fullTx 为 false，则只转换交易哈希
+func (c *BlockConverter) convertTransactions(ethTxs []eth.TxOrHash, fullTx bool) any {
+	if ethTxs == nil {
+		return nil
+	}
+
+	if fullTx {
+		// 如果需要完整交易信息，返回TxOrHash切片
+		txs := make([]TxOrHash, len(ethTxs))
+		txConverter := NewTransactionConverter()
+
+		for i, ethTx := range ethTxs {
+			txs[i] = TxOrHash{
+				Transaction: *txConverter.ConvertToTransaction(&ethTx.Transaction),
+				Populated: true,
+			}
+		}
+		return txs
+	} else {
+		// 如果只需要哈希，返回字符串切片
+		hashes := make([]string, len(ethTxs))
+		for i, ethTx := range ethTxs {
+			hashes[i] = ethTx.Hash.String()
+		}
+		return hashes
+	}
+}
+
 // BlockConverter 提供以太坊区块数据到领域模型的转换服务
 // 该结构体负责将以太坊原生区块数据转换为应用程序使用的领域模型
 // 转换过程包括数据类型转换、字段映射以及并发处理等操作
@@ -27,10 +57,11 @@ func NewBlockConverter() *BlockConverter {
 //
 // 参数:
 //   - ethBlock: 以太坊原生区块数据，包含区块的所有原始信息
+//   - fullTx: 是否转换完整的交易信息
 //
 // 返回:
 //   - *Block: 转换后的区块领域模型，包含所有必要的区块信息
-func (c *BlockConverter) ConvertToBlock(ethBlock *eth.Block) *Block {
+func (c *BlockConverter) ConvertToBlock(ethBlock *eth.Block, fullTx bool) *Block {
 	if ethBlock == nil {
 		return nil
 	}
@@ -115,7 +146,7 @@ func (c *BlockConverter) ConvertToBlock(ethBlock *eth.Block) *Block {
 		GasLimit:              ethBlock.GasLimit.Big().String(),
 		GasUsed:               ethBlock.GasUsed.Big().String(),
 		Timestamp:             ethBlock.Timestamp.Big().String(),
-		Transactions:          ethBlock.Transactions,
+		Transactions:          c.convertTransactions(ethBlock.Transactions, fullTx),
 		Uncles:                ethBlock.Uncles,
 		BaseFeePerGas:         &baseFeePerGas,
 		WithdrawalsRoot:       &withdrawalsRoot,
