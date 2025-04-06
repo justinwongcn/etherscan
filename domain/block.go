@@ -42,7 +42,9 @@ type Block struct {
 	// Timestamp 区块时间戳，Unix时间戳格式
 	Timestamp string `json:"timestamp"`
 	// Transactions 区块包含的所有交易
-	Transactions []TxOrHash `json:"transactions"`
+	// 当fullTx为true时，类型为[]TxOrHash
+	// 当fullTx为false时，类型为[]string，只包含交易哈希
+	Transactions any `json:"transactions"`
 	// Uncles 叔块哈希列表
 	Uncles []eth.Hash `json:"uncles"`
 
