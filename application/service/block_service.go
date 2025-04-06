@@ -80,11 +80,12 @@ func (s *BlockService) parseBlockParameter(blockHashOrNumber string) (string, er
 // 参数:
 //   - ctx: 上下文对象，用于控制请求的生命周期
 //   - blockHashOrNumber: 区块标识符，支持区块号、区块哈希和特殊标识符
+//   - fullTx: 如果为true则返回完整的交易对象，否则仅返回交易哈希
 //
 // 返回:
 //   - *domain.Block: 包含区块完整信息的领域模型指针
 //   - error: 如果查询过程中发生错误，将返回相应的错误信息
-func (s *BlockService) GetBlock(ctx context.Context, blockHashOrNumber string) (*domain.Block, error) {
+func (s *BlockService) GetBlock(ctx context.Context, blockHashOrNumber string, fullTx bool) (*domain.Block, error) {
 	// 解析并标准化区块参数
 	param, err := ethereum.ParseBlockParameter(blockHashOrNumber)
 	if err != nil {
@@ -95,9 +96,9 @@ func (s *BlockService) GetBlock(ctx context.Context, blockHashOrNumber string) (
 	// 如果是区块哈希（以0x开头且长度大于10的十六进制字符串）
 	var ethBlock *eth.Block
 	if len(param) >= 2 && param[:2] == "0x" && len(param) > 10 {
-		ethBlock, err = s.client.GetBlockByHash(ctx, param, true)
+		ethBlock, err = s.client.GetBlockByHash(ctx, param, fullTx)
 	} else {
-		ethBlock, err = s.client.GetBlockByNumber(ctx, param, true)
+		ethBlock, err = s.client.GetBlockByNumber(ctx, param, fullTx)
 	}
 	if err != nil {
 		return nil, err

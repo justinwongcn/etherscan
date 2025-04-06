@@ -23,10 +23,11 @@ type BlockServiceInterface interface {
 	//   - ctx: 上下文对象，用于控制请求的生命周期
 	//   - blockHashOrNumber: 区块标识符，可以是区块号（数字字符串）或区块哈希（0x开头的十六进制字符串）
 	//     支持的特殊值："latest"（最新区块）、"earliest"（创世区块）、"pending"（待打包区块）
+	//   - fullTx: 如果为true则返回完整的交易对象，否则仅返回交易哈希
 	// 返回:
 	//   - *domain.Block: 包含区块完整信息的领域模型指针
 	//   - error: 如果查询过程中发生错误，将返回相应的错误信息
-	GetBlock(ctx context.Context, blockHashOrNumber string) (*domain.Block, error)
+	GetBlock(ctx context.Context, blockHashOrNumber string, fullTx bool) (*domain.Block, error)
 
 	// GetBlockTransactionCount 获取指定区块中的交易数量
 	// 参数:

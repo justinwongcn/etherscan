@@ -7,10 +7,11 @@ import (
 )
 
 // RegisterRoutes 注册所有HTTP路由
-// 该函数配置了所有与以太坊区块查询相关的API路由
+// 该函数配置了所有与以太坊区块查询和交易相关的API路由
 // 参数:
 //   - r: Gin框架的路由引擎实例
-//   - blockHandler: 区块处理器实例，负责处理具体的请求逻辑
+//   - blockHandler: 区块处理器实例，负责处理区块相关的请求逻辑
+//   - transactionHandler: 交易处理器实例，负责处理交易相关的请求逻辑
 //
 // 路由配置:
 //
@@ -23,8 +24,12 @@ import (
 //     - 区块号（十进制数字）
 //     - 区块哈希（0x开头的十六进制字符串）
 //     - 特殊值：latest、earliest、pending
+//     查询参数:
+//     - fullTx: 布尔值，控制是否返回完整的交易对象
+//     true: 返回完整的交易对象（默认值）
+//     false: 仅返回交易哈希
 //
-//  3. GET /block/count/:number/tx
+//  3. GET /block/count/:number
 //     获取指定区块中的交易数量
 //     参数 number 支持同上
 //
@@ -49,12 +54,14 @@ import (
 //     返回:
 //     - 交易收据信息，包含交易哈希、区块信息、gas使用情况、合约地址、日志等
 //
-//  7. GET /block/:number/tx/:index
+//  7. GET /block/tx/:index
 //     获取指定区块中特定索引位置的交易信息
-//     参数:
-//     - number: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
-//     支持的特殊值：latest、earliest、pending
+//     路径参数:
 //     - index: 交易在区块中的索引位置（从0开始的整数）
+//     查询参数:
+//     - number: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
+//     支持的特殊值：latest（最新区块）、earliest（创世区块）、pending（待打包区块）
+//     默认值：latest
 //
 //  8. POST /tx/send
 //     发送已签名的交易数据到以太坊网络

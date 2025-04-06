@@ -58,6 +58,9 @@ func (h *BlockHandler) GetBlockHeight(c *gin.Context) {
 //   - number: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
 //     支持的特殊值: "latest"（最新区块）、"earliest"（创世区块）、"pending"（待打包区块）
 //
+// 查询参数:
+//   - fullTx: 布尔值，控制是否返回完整的交易信息，默认为true
+//
 // 响应格式:
 //   - 成功: {"block": <区块信息对象>}
 //   - 失败: {"error": <错误信息>}
@@ -72,8 +75,14 @@ func (h *BlockHandler) GetBlock(c *gin.Context) {
 		blockParam = ethereum.BlockLatest
 	}
 
+	// 获取fullTx查询参数，默认为true
+	fullTx := true
+	if fullTxStr := c.Query("fullTx"); fullTxStr == "false" {
+		fullTx = false
+	}
+
 	// 获取区块信息
-	block, err := h.blockService.GetBlock(c.Request.Context(), blockParam)
+	block, err := h.blockService.GetBlock(c.Request.Context(), blockParam, fullTx)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),

@@ -16,7 +16,7 @@ type TransactionServiceInterface interface {
 	//   - ctx: 上下文对象，用于控制请求的生命周期
 	//   - txHash: 交易哈希（32字节的十六进制字符串）
 	// 返回:
-	//   - *eth.Transaction: 包含交易完整信息的结构体指针
+	//   - *domain.Transaction: 包含交易完整信息的领域模型指针
 	//   - error: 如果查询过程中发生错误，将返回相应的错误信息
 	GetTransactionByHash(ctx context.Context, txHash string) (*domain.Transaction, error)
 
@@ -27,7 +27,7 @@ type TransactionServiceInterface interface {
 	//     支持的特殊值："latest"（最新区块）、"earliest"（创世区块）、"pending"（待打包区块）
 	//   - index: 交易在区块中的索引位置
 	// 返回:
-	//   - *eth.Transaction: 包含交易完整信息的结构体指针
+	//   - *eth.Transaction: 包含交易完整信息的领域模型指针
 	//   - error: 如果查询过程中发生错误，将返回相应的错误信息
 	GetTransactionByIndex(ctx context.Context, blockHashOrNumber string, index uint64) (*eth.Transaction, error)
 

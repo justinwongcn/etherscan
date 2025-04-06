@@ -31,8 +31,8 @@ func (m *MockBlockService) GetLatestBlockHeight(ctx context.Context) (string, er
 }
 
 // GetBlock mock实现
-func (m *MockBlockService) GetBlock(ctx context.Context, blockHashOrNumber string) (*domain.Block, error) {
-	args := m.Called(ctx, blockHashOrNumber)
+func (m *MockBlockService) GetBlock(ctx context.Context, blockHashOrNumber string, fullTx bool) (*domain.Block, error) {
+	args := m.Called(ctx, blockHashOrNumber, fullTx)
 	if block, ok := args.Get(0).(*domain.Block); ok {
 		return block, args.Error(1)
 	}
