@@ -43,9 +43,9 @@ func (m *MockTransactionService) GetTransactionByHash(ctx context.Context, txHas
 }
 
 // GetTransactionByIndex mock实现
-func (m *MockTransactionService) GetTransactionByIndex(ctx context.Context, blockHashOrNumber string, index uint64) (*eth.Transaction, error) {
+func (m *MockTransactionService) GetTransactionByIndex(ctx context.Context, blockHashOrNumber string, index uint64) (*domain.Transaction, error) {
 	args := m.Called(ctx, blockHashOrNumber, index)
-	if tx, ok := args.Get(0).(*eth.Transaction); ok {
+	if tx, ok := args.Get(0).(*domain.Transaction); ok {
 		return tx, args.Error(1)
 	}
 	return nil, args.Error(1)
@@ -180,27 +180,36 @@ func TestGetTransactionCount(t *testing.T) {
 
 func TestGetTransactionByHash(t *testing.T) {
 	// 创建一个模拟的交易数据
-	mockTransaction := &eth.Transaction{
-		Hash:        *eth.MustData32("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"),
-		BlockHash:   eth.MustData32("0x0000000000000000000000000000000000000000000000000000000000000000"),
-		BlockNumber: eth.MustQuantity("0x1"),
-		From:        *eth.MustAddress("0x742d35Cc6634C0532925a3b844Bc454e4438f44e"),
-		Gas:         *eth.MustQuantity("0x5208"),
-		Input:       eth.Input("0x"),
-		Nonce:       *eth.MustQuantity("0x0"),
-		To:          eth.MustAddress("0x742d35Cc6634C0532925a3b844Bc454e4438f44e"),
-		Index:       eth.MustQuantity("0x0"),
-		Value:       *eth.MustQuantity("0x0"),
-		V:           *eth.MustQuantity("0x1b"),
-		R:           *eth.MustQuantity("0x0"),
-		S:           *eth.MustQuantity("0x0"),
+	blockHash := "0x0000000000000000000000000000000000000000000000000000000000000000"
+	blockNumber := "1"
+	from := "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+	to := "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+	hash := "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+	index := "0"
+	typ := "0"
+
+	mockTransaction := &domain.Transaction{
+		Type:        &typ,
+		BlockHash:   &blockHash,
+		BlockNumber: &blockNumber,
+		From:        from,
+		Gas:         "21000",
+		Hash:        hash,
+		Input:       "0x",
+		Nonce:       "0",
+		To:          &to,
+		Index:       &index,
+		Value:       "0",
+		V:           "27",
+		R:           "0",
+		S:           "0",
 	}
 
 	// 设置测试用例
 	tests := []struct {
 		name           string
 		txHash         string
-		mockTx         *eth.Transaction
+		mockTx         *domain.Transaction
 		mockError      error
 		expectedStatus int
 		expectedBody   map[string]any
@@ -286,14 +295,37 @@ func TestGetTransactionByHash(t *testing.T) {
 
 func TestGetTransactionByIndex(t *testing.T) {
 	// 创建一个模拟的交易数据
-	mockTransaction := &eth.Transaction{}
+	blockHash := "0x0000000000000000000000000000000000000000000000000000000000000000"
+	blockNumber := "1"
+	from := "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+	to := "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
+	hash := "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+	index := "0"
+	typ := "0"
+
+	mockTransaction := &domain.Transaction{
+		Type:        &typ,
+		BlockHash:   &blockHash,
+		BlockNumber: &blockNumber,
+		From:        from,
+		Gas:         "21000",
+		Hash:        hash,
+		Input:       "0x",
+		Nonce:       "0",
+		To:          &to,
+		Index:       &index,
+		Value:       "0",
+		V:           "27",
+		R:           "0",
+		S:           "0",
+	}
 
 	// 设置测试用例
 	tests := []struct {
 		name           string
 		blockParam     string
 		index          string
-		mockTx         *eth.Transaction
+		mockTx         *domain.Transaction
 		mockError      error
 		expectedStatus int
 		expectedBody   map[string]any

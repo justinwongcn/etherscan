@@ -303,7 +303,7 @@ func TestGetBlock(t *testing.T) {
 			mockService := new(MockBlockService)
 
 			// 设置mock期望
-			mockService.On("GetBlock", mock.Anything, tt.blockParam).Return(tt.mockBlock, tt.mockError)
+			mockService.On("GetBlock", mock.Anything, tt.blockParam, true).Return(tt.mockBlock, tt.mockError)
 
 			// 创建handler
 			handler := NewBlockHandler(mockService)
