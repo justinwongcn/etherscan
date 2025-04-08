@@ -9,13 +9,20 @@ import (
 // TransactionConverter 提供以太坊交易数据到领域模型的转换服务
 // 该结构体负责将以太坊原生交易数据转换为应用程序使用的领域模型
 // 转换过程包括数据类型转换和字段映射等操作
-type TransactionConverter struct{}
+type TransactionConverter struct{
+	threshold int // 并发处理的阈值
+}
 
 // NewTransactionConverter 创建一个新的交易转换器实例
 // 返回:
 //   - *TransactionConverter: 交易转换器实例
-func NewTransactionConverter() *TransactionConverter {
-	return &TransactionConverter{}
+func NewTransactionConverter(threshold int) *TransactionConverter {
+	if threshold <= 0 {
+		threshold = 50 // 默认阈值
+	}
+	return &TransactionConverter{
+		threshold: threshold,
+	}
 }
 
 // convertBlobVersionedHashes 将eth.Hashes转换为领域模型的Hashes
@@ -98,34 +105,39 @@ func (c *TransactionConverter) ConvertToTransaction(ethTx *eth.Transaction) *Tra
 	s := ethTx.S.Big().String()
 
 	// 转换所有字段为uint64，同时处理空值情况
-	var yParity, gasPrice, maxFeePerGas, maxPriorityFeePerGas, standardV, chainId, maxFeePerBlobGas string
+	var yParity, gasPrice, maxFeePerGas, maxPriorityFeePerGas, standardV, chainId, maxFeePerBlobGas, creates *string
 
 	if ethTx.YParity != nil {
-		yParity = ethTx.YParity.Big().String()
+		yp := ethTx.YParity.Big().String()
+		yParity = &yp
 	}
 	if ethTx.GasPrice != nil {
-		gasPrice = ethTx.GasPrice.Big().String()
+		gp := ethTx.GasPrice.Big().String()
+		gasPrice = &gp
 	}
 	if ethTx.MaxFeePerGas != nil {
-		maxFeePerGas = ethTx.MaxFeePerGas.Big().String()
+		mfg := ethTx.MaxFeePerGas.Big().String()
+		maxFeePerGas = &mfg
 	}
 	if ethTx.MaxPriorityFeePerGas != nil {
-		maxPriorityFeePerGas = ethTx.MaxPriorityFeePerGas.Big().String()
+		mpfg := ethTx.MaxPriorityFeePerGas.Big().String()
+		maxPriorityFeePerGas = &mpfg
 	}
 	if ethTx.StandardV != nil {
-		standardV = ethTx.StandardV.Big().String()
+		sv := ethTx.StandardV.Big().String()
+		standardV = &sv
 	}
 	if ethTx.ChainId != nil {
-		chainId = ethTx.ChainId.Big().String()
+		cid := ethTx.ChainId.Big().String()
+		chainId = &cid
 	}
 	if ethTx.MaxFeePerBlobGas != nil {
-		maxFeePerBlobGas = ethTx.MaxFeePerBlobGas.Big().String()
+		mfbg := ethTx.MaxFeePerBlobGas.Big().String()
+		maxFeePerBlobGas = &mfbg
 	}
-
-	// 处理Creates字段，确保类型转换正确
-	var creates string
 	if ethTx.Creates != nil {
-		creates = ethTx.Creates.String()
+		c := ethTx.Creates.String()
+		creates = &c
 	}
 
 	// 转换eth.Hash、eth.Address和eth.Data类型为string
@@ -165,18 +177,18 @@ func (c *TransactionConverter) ConvertToTransaction(ethTx *eth.Transaction) *Tra
 		V:                    v,
 		R:                    r,
 		S:                    s,
-		YParity:              &yParity,
-		GasPrice:             &gasPrice,
-		MaxFeePerGas:         &maxFeePerGas,
-		MaxPriorityFeePerGas: &maxPriorityFeePerGas,
-		StandardV:            &standardV,
-		Raw:                  raw,
-		PublicKey:            publicKey,
-		ChainId:              &chainId,
-		Creates:              &creates,
-		Condition:            ethTx.Condition,
+		YParity:              yParity,              // 移除多余的取地址符号
+		GasPrice:             gasPrice,             // 移除多余的取地址符号
+		MaxFeePerGas:         maxFeePerGas,         // 移除多余的取地址符号
+		MaxPriorityFeePerGas: maxPriorityFeePerGas, // 移除多余的取地址符号
+		StandardV:            standardV,            // 移除多余的取地址符号
+		Raw:                  raw,                  // 已经是正确的形式
+		PublicKey:            publicKey,            // 已经是正确的形式
+		ChainId:              chainId,              // 移除多余的取地址符号
+		Creates:              creates,              // 移除多余的取地址符号
+		Condition:            ethTx.Condition,      // 保持不变
 		AccessList:           c.convertAccessList(ethTx.AccessList),
-		MaxFeePerBlobGas:     &maxFeePerBlobGas,
+		MaxFeePerBlobGas:     maxFeePerBlobGas,     // 移除多余的取地址符号
 		BlobVersionedHashes:  blobHashes,
 		BlobBundle:           ethTx.BlobBundle,
 		AuthorizationList:    ethTx.AuthorizationList,

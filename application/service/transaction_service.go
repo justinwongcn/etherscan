@@ -3,6 +3,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/justinwongcn/etherscan/domain"
 	"github.com/justinwongcn/etherscan/internal/ethereum"
@@ -45,7 +46,7 @@ func (s *TransactionService) GetTransactionByHash(ctx context.Context, txHash st
 	}
 
 	// 使用转换器将eth.Transaction转换为domain.Transaction
-	converter := domain.NewTransactionConverter()
+	converter := domain.NewTransactionConverter(50)
 	return converter.ConvertToTransaction(ethTx), nil
 }
 
@@ -80,7 +81,7 @@ func (s *TransactionService) GetTransactionByIndex(ctx context.Context, blockHas
 	}
 
 	// 使用转换器将eth.Transaction转换为domain.Transaction
-	converter := domain.NewTransactionConverter()
+	converter := domain.NewTransactionConverter(50)
 	return converter.ConvertToTransaction(ethTx), nil
 }
 
@@ -88,7 +89,6 @@ func (s *TransactionService) GetTransactionByIndex(ctx context.Context, blockHas
 // 发送已签名的交易数据到以太坊网络
 // 参数:
 //   - ctx: 上下文对象，用于控制请求的生命周期
-//   - signedTxData: 已签名的交易数据（十六进制格式，以0x开头）
 //
 // 返回:
 //   - string: 交易哈希（32字节的十六进制字符串）
@@ -107,9 +107,16 @@ func (s *TransactionService) SendRawTransaction(ctx context.Context, signedTxDat
 // 返回:
 //   - *domain.TransactionReceipt: 包含交易收据完整信息的领域模型指针
 //   - error: 如果查询过程中发生错误，将返回相应的错误信息
-func (s *TransactionService) GetTransactionReceipt(ctx context.Context, txHash string) (*eth.TransactionReceipt, error) {
+func (s *TransactionService) GetTransactionReceipt(ctx context.Context, txHash string) (*domain.TransactionReceipt, error) {
 	// 调用以太坊客户端获取交易收据
-	return s.client.GetTransactionReceipt(ctx, txHash)
+	receipt, err := s.client.GetTransactionReceipt(ctx, txHash)
+	if err != nil {
+		return nil, err
+	}
+
+	// 使用转换器将eth.TransactionReceipt转换为domain.TransactionReceipt
+	converter := domain.NewTransactionReceiptConverter()
+	return converter.ConvertToTransactionReceipt(receipt), nil
 }
 
 // GetTransactionCount 实现了TransactionServiceInterface接口中的同名方法
@@ -120,9 +127,14 @@ func (s *TransactionService) GetTransactionReceipt(ctx context.Context, txHash s
 //   - blockHashOrNumber: 区块标识符，支持区块号、区块哈希和特殊标识符
 //
 // 返回:
-//   - uint64: 交易数量
+//   - string: 交易数量（十六进制字符串）
 //   - error: 如果查询过程中发生错误，将返回相应的错误信息
-func (s *TransactionService) GetTransactionCount(ctx context.Context, address string, blockHashOrNumber string) (uint64, error) {
+func (s *TransactionService) GetTransactionCount(ctx context.Context, address string, blockHashOrNumber string) (string, error) {
 	// 调用以太坊客户端获取交易数量
-	return s.client.GetTransactionCount(ctx, address, blockHashOrNumber)
+	count, err := s.client.GetTransactionCount(ctx, address, blockHashOrNumber)
+	if err != nil {
+		return "", err
+	}
+	// 将uint64类型的交易数量转换为十进制字符串
+	return fmt.Sprintf("%d", count), nil
 }

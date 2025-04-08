@@ -5,7 +5,6 @@ import (
 	"context"
 
 	"github.com/justinwongcn/etherscan/domain"
-	"github.com/justinwongcn/go-ethlibs/eth"
 )
 
 // TransactionServiceInterface 定义了交易服务的接口规范
@@ -47,7 +46,7 @@ type TransactionServiceInterface interface {
 	// 返回:
 	//   - *domain.TransactionReceipt: 包含交易收据完整信息的领域模型指针
 	//   - error: 如果查询过程中发生错误，将返回相应的错误信息
-	GetTransactionReceipt(ctx context.Context, txHash string) (*eth.TransactionReceipt, error)
+	GetTransactionReceipt(ctx context.Context, txHash string) (*domain.TransactionReceipt, error)
 
 	// GetTransactionCount 获取指定地址在特定区块的交易数量
 	// 参数:
@@ -56,7 +55,7 @@ type TransactionServiceInterface interface {
 	//   - blockHashOrNumber: 区块标识符，可以是区块号（数字字符串）或区块哈希（0x开头的十六进制字符串）
 	//     支持的特殊值："latest"（最新区块）、"earliest"（创世区块）、"pending"（待打包区块）
 	// 返回:
-	//   - uint64: 交易数量（非负整数）
+	//   - string: 交易数量（十六进制字符串）
 	//   - error: 如果查询过程中发生错误，将返回相应的错误信息
-	GetTransactionCount(ctx context.Context, address string, blockHashOrNumber string) (uint64, error)
+	GetTransactionCount(ctx context.Context, address string, blockHashOrNumber string) (string, error)
 }

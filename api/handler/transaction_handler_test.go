@@ -14,7 +14,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/justinwongcn/etherscan/application/service"
 	"github.com/justinwongcn/etherscan/domain"
-	"github.com/justinwongcn/go-ethlibs/eth"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )
@@ -28,9 +27,9 @@ type MockTransactionService struct {
 var _ service.TransactionServiceInterface = (*MockTransactionService)(nil)
 
 // GetTransactionCount mock实现
-func (m *MockTransactionService) GetTransactionCount(ctx context.Context, address string, blockHashOrNumber string) (uint64, error) {
+func (m *MockTransactionService) GetTransactionCount(ctx context.Context, address string, blockHashOrNumber string) (string, error) {
 	args := m.Called(ctx, address, blockHashOrNumber)
-	return args.Get(0).(uint64), args.Error(1)
+	return args.Get(0).(string), args.Error(1)
 }
 
 // GetTransactionByHash mock实现
@@ -58,9 +57,9 @@ func (m *MockTransactionService) SendRawTransaction(ctx context.Context, signedT
 }
 
 // GetTransactionReceipt mock实现
-func (m *MockTransactionService) GetTransactionReceipt(ctx context.Context, txHash string) (*eth.TransactionReceipt, error) {
+func (m *MockTransactionService) GetTransactionReceipt(ctx context.Context, txHash string) (*domain.TransactionReceipt, error) {
 	args := m.Called(ctx, txHash)
-	if receipt, ok := args.Get(0).(*eth.TransactionReceipt); ok {
+	if receipt, ok := args.Get(0).(*domain.TransactionReceipt); ok {
 		return receipt, args.Error(1)
 	}
 	return nil, args.Error(1)
@@ -72,7 +71,7 @@ func TestGetTransactionCount(t *testing.T) {
 		name           string
 		address        string
 		blockParam     string
-		mockCount      uint64
+		mockCount      string
 		mockError      error
 		expectedStatus int
 		expectedBody   map[string]any
@@ -81,34 +80,34 @@ func TestGetTransactionCount(t *testing.T) {
 			name:           "成功获取账户交易数量",
 			address:        "0x1234567890abcdef",
 			blockParam:     "latest",
-			mockCount:      50,
+			mockCount:      "50",
 			mockError:      nil,
 			expectedStatus: http.StatusOK,
-			expectedBody:   map[string]any{"count": float64(50)},
+			expectedBody:   map[string]any{"count": "50"},
 		},
 		{
 			name:           "使用latest标签获取交易数量",
 			address:        "0x1234567890abcdef",
 			blockParam:     "latest",
-			mockCount:      50,
+			mockCount:      "50",
 			mockError:      nil,
 			expectedStatus: http.StatusOK,
-			expectedBody:   map[string]any{"count": float64(50)},
+			expectedBody:   map[string]any{"count": "50"},
 		},
 		{
 			name:           "使用区块哈希获取交易数量",
 			address:        "0x1234567890abcdef",
 			blockParam:     "0x1234567890abcdef",
-			mockCount:      75,
+			mockCount:      "75",
 			mockError:      nil,
 			expectedStatus: http.StatusOK,
-			expectedBody:   map[string]any{"count": float64(75)},
+			expectedBody:   map[string]any{"count": "75"},
 		},
 		{
 			name:           "地址为空",
 			address:        "",
 			blockParam:     "12345",
-			mockCount:      0,
+			mockCount:      "0",
 			mockError:      nil,
 			expectedStatus: http.StatusInternalServerError,
 			expectedBody:   map[string]any{"error": "address is required"},
@@ -117,7 +116,7 @@ func TestGetTransactionCount(t *testing.T) {
 			name:           "获取交易数量失败",
 			address:        "0x1234567890abcdef",
 			blockParam:     "12345",
-			mockCount:      0,
+			mockCount:      "0",
 			mockError:      errors.New("failed to get transaction count"),
 			expectedStatus: http.StatusInternalServerError,
 			expectedBody:   map[string]any{"error": "failed to get transaction count"},
@@ -442,27 +441,29 @@ func TestGetTransactionByIndex(t *testing.T) {
 }
 
 func TestGetTransactionReceipt(t *testing.T) {
+	status := "1"
+	contractAddress := "0x742d35Cc6634C0532925a3b844Bc454e4438f44e"
 	// 创建一个模拟的交易收据数据
-	mockReceipt := &eth.TransactionReceipt{
-		TransactionHash:   *eth.MustData32("0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"),
-		BlockHash:         *eth.MustHash("0x0000000000000000000000000000000000000000000000000000000000000000"),
-		BlockNumber:       *eth.MustQuantity("0x1"),
-		ContractAddress:   eth.MustAddress("0x742d35Cc6634C0532925a3b844Bc454e4438f44e"),
-		CumulativeGasUsed: *eth.MustQuantity("0x5208"),
-		From:              *eth.MustAddress("0x742d35Cc6634C0532925a3b844Bc454e4438f44e"),
-		GasUsed:           *eth.MustQuantity("0x5208"),
-		Logs:              []eth.Log{},
-		LogsBloom:         *eth.MustData256("0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"),
-		Status:            eth.MustQuantity("0x1"),
-		To:                eth.MustAddress("0x742d35Cc6634C0532925a3b844Bc454e4438f44e"),
-		TransactionIndex:  *eth.MustQuantity("0x0"),
+	mockReceipt := &domain.TransactionReceipt{
+		TransactionHash:   "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+		BlockHash:         "0x0000000000000000000000000000000000000000000000000000000000000000",
+		BlockNumber:       "1",
+		ContractAddress:   &contractAddress,
+		CumulativeGasUsed: "21000",
+		From:              "0x742d35Cc6634C0532925a3b844Bc454e4438f44e",
+		GasUsed:           "21000",
+		Logs:              []domain.Log{},
+		LogsBloom:         "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+		Status:            &status,
+		To:                &contractAddress,
+		TransactionIndex:  "0",
 	}
 
 	// 设置测试用例
 	tests := []struct {
 		name           string
 		txHash         string
-		mockReceipt    *eth.TransactionReceipt
+		mockReceipt    *domain.TransactionReceipt
 		mockError      error
 		expectedStatus int
 		expectedBody   map[string]any

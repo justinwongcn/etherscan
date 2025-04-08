@@ -50,39 +50,35 @@ func (c *BlockConverter) ConvertToBlock(ethBlock *eth.Block, fullTx bool) *Block
 	hash := ethBlock.Hash.String()
 
 	// 处理可选字段，添加nil检查
-	var baseFeePerGas string
+	var baseFeePerGas, withdrawalsRoot, excessBlobGas, blobGasUsed, nonce, mixHash, parentBeaconBlockRoot *string
+	
 	if ethBlock.BaseFeePerGas != nil {
-		baseFeePerGas = ethBlock.BaseFeePerGas.Big().String()
+	    bfpg := ethBlock.BaseFeePerGas.Big().String()
+	    baseFeePerGas = &bfpg
 	}
-
-	var withdrawalsRoot string
 	if ethBlock.WithdrawalsRoot != nil {
-		withdrawalsRoot = ethBlock.WithdrawalsRoot.String()
+	    wr := ethBlock.WithdrawalsRoot.String()
+	    withdrawalsRoot = &wr
 	}
-
-	var excessBlobGas string
 	if ethBlock.ExcessBlobGas != nil {
-		excessBlobGas = ethBlock.ExcessBlobGas.Big().String()
+	    ebg := ethBlock.ExcessBlobGas.Big().String()
+	    excessBlobGas = &ebg
 	}
-
-	var blobGasUsed string
 	if ethBlock.BlobGasUsed != nil {
-		blobGasUsed = ethBlock.BlobGasUsed.Big().String()
+	    bgu := ethBlock.BlobGasUsed.Big().String()
+	    blobGasUsed = &bgu
 	}
-
-	var nonce string
 	if ethBlock.Nonce != nil {
-		nonce = ethBlock.Nonce.String()
+	    n := ethBlock.Nonce.String()
+	    nonce = &n
 	}
-
-	var mixHash string
 	if ethBlock.MixHash != nil {
-		mixHash = ethBlock.MixHash.String()
+	    mh := ethBlock.MixHash.String()
+	    mixHash = &mh
 	}
-
-	var parentBeaconBlockRoot string
 	if ethBlock.ParentBeaconBlockRoot != nil {
-		parentBeaconBlockRoot = ethBlock.ParentBeaconBlockRoot.String()
+	    pbbr := ethBlock.ParentBeaconBlockRoot.String()
+	    parentBeaconBlockRoot = &pbbr
 	}
 
 	// 处理SealFields
@@ -110,14 +106,14 @@ func (c *BlockConverter) ConvertToBlock(ethBlock *eth.Block, fullTx bool) *Block
 		Timestamp:             ethBlock.Timestamp.Big().String(),
 		Transactions:          c.convertTransactions(ethBlock.Transactions, fullTx),
 		Uncles:                c.convertUncles(ethBlock.Uncles),
-		BaseFeePerGas:         &baseFeePerGas,
-		WithdrawalsRoot:       &withdrawalsRoot,
+		BaseFeePerGas:         baseFeePerGas,         // 移除多余的取地址符号
+		WithdrawalsRoot:       withdrawalsRoot,        // 移除多余的取地址符号
 		Withdrawals:           c.convertWithdrawals(ethBlock.Withdrawals),
-		ParentBeaconBlockRoot: &parentBeaconBlockRoot,
-		ExcessBlobGas:         &excessBlobGas,
-		BlobGasUsed:           &blobGasUsed,
-		Nonce:                 &nonce,
-		MixHash:               &mixHash,
+		ParentBeaconBlockRoot: parentBeaconBlockRoot,  // 移除多余的取地址符号
+		ExcessBlobGas:         excessBlobGas,         // 移除多余的取地址符号
+		BlobGasUsed:           blobGasUsed,           // 移除多余的取地址符号
+		Nonce:                 nonce,                  // 移除多余的取地址符号
+		MixHash:               mixHash,                // 移除多余的取地址符号
 		Step:                  ethBlock.Step,
 		Signature:             ethBlock.Signature,
 		SealFields:            &sealFields,
@@ -138,7 +134,7 @@ func (c *BlockConverter) convertTransactions(ethTxs []eth.TxOrHash, fullTx bool)
 	}
 
 	// 返回完整交易信息
-	txConverter := NewTransactionConverter()
+	txConverter := NewTransactionConverter(c.threshold)
 	return parallel.Process(ethTxs,
 		func(tx eth.TxOrHash) TxOrHash {
 			return TxOrHash{
