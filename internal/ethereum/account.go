@@ -35,7 +35,12 @@ func (c *Client) GetBalance(ctx context.Context, address string, numberOrTag str
 	}
 
 	// 处理默认值并验证区块号格式
-	numOrTag := eth.MustBlockNumberOrTag(getDefaultNumberOrTag(numberOrTag))
+	parsedBlock, err := ParseBlockParameter(numberOrTag)
+	if err != nil {
+		return 0, fmt.Errorf("invalid block parameter: %v", err)
+	}
+
+	numOrTag := eth.MustBlockNumberOrTag(parsedBlock)
 	if numOrTag == nil {
 		return 0, fmt.Errorf("invalid block number or tag: %s", numberOrTag)
 	}
@@ -87,9 +92,9 @@ func (c *Client) GetBalances(ctx context.Context, addresses []string, numberOrTa
 	}
 
 	// 验证并转换区块号格式
-	numOrTag := eth.MustBlockNumberOrTag(getDefaultNumberOrTag(numberOrTag))
-	if numOrTag == nil {
-		return nil, fmt.Errorf("invalid block number or tag: %s", numberOrTag)
+	parsedBlock, err := ParseBlockParameter(numberOrTag)
+	if err != nil {
+		return nil, fmt.Errorf("invalid block parameter: %v", err)
 	}
 
 	// 创建结果映射
@@ -114,6 +119,11 @@ func (c *Client) GetBalances(ctx context.Context, addresses []string, numberOrTa
 			ethAddr, err := eth.NewAddress(addr)
 			if err != nil {
 				return fmt.Errorf("invalid ethereum address: %v", err)
+			}
+
+			numOrTag := eth.MustBlockNumberOrTag(parsedBlock)
+			if numOrTag == nil {
+				return fmt.Errorf("invalid block number or tag: %s", numberOrTag)
 			}
 
 			// 调用节点接口获取余额
@@ -163,7 +173,12 @@ func (c *Client) GetCode(ctx context.Context, address string, numberOrTag string
 	}
 
 	// 处理默认值并验证区块号格式
-	numOrTag := eth.MustBlockNumberOrTag(getDefaultNumberOrTag(numberOrTag))
+	parsedBlock, err := ParseBlockParameter(numberOrTag)
+	if err != nil {
+		return "", fmt.Errorf("invalid block parameter: %v", err)
+	}
+
+	numOrTag := eth.MustBlockNumberOrTag(parsedBlock)
 	if numOrTag == nil {
 		return "", fmt.Errorf("invalid block number or tag: %s", numberOrTag)
 	}

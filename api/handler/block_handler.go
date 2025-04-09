@@ -29,7 +29,7 @@ func NewBlockHandler(blockService service.BlockServiceInterface) *BlockHandler {
 }
 
 // GetBlockHeight 处理获取最新区块高度的HTTP请求
-// 请求路径: GET /block/height
+// 请求路径: GET /blocks/latest/height
 // 响应格式:
 //   - 成功: {"height": <区块高度>}
 //   - 失败: {"error": <错误信息>}
@@ -53,7 +53,7 @@ func (h *BlockHandler) GetBlockHeight(c *gin.Context) {
 }
 
 // GetBlock 处理获取区块信息的HTTP请求
-// 请求路径: GET /block/:number
+// 请求路径: GET /blocks/:number
 // 路径参数:
 //   - number: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
 //     支持的特殊值: "latest"（最新区块）、"earliest"（创世区块）、"pending"（待打包区块）
@@ -97,7 +97,7 @@ func (h *BlockHandler) GetBlock(c *gin.Context) {
 }
 
 // GetBlockTransactionCount 处理获取区块交易数量的HTTP请求
-// 请求路径: GET /block/count/:number/tx
+// 请求路径: GET /blocks/:number/transactions/count
 // 路径参数:
 //   - number: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
 //     支持的特殊值: "latest"（最新区块）、"earliest"（创世区块）、"pending"（待打包区块）

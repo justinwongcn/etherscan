@@ -14,14 +14,14 @@ type BlockServiceInterface interface {
 	// 参数:
 	//   - ctx: 上下文对象，用于控制请求的生命周期
 	// 返回:
-	//   - uint64: 最新区块的高度编号
+	//   - string: 最新区块的高度编号（十进制字符串格式）
 	//   - error: 如果查询过程中发生错误，将返回相应的错误信息
 	GetLatestBlockHeight(ctx context.Context) (string, error)
 
 	// GetBlock 根据区块号或区块哈希获取区块的详细信息
 	// 参数:
 	//   - ctx: 上下文对象，用于控制请求的生命周期
-	//   - blockHashOrNumber: 区块标识符，可以是区块号（数字字符串）或区块哈希（0x开头的十六进制字符串）
+	//   - blockHashOrNumber: 区块标识符，可以是区块号（数字字符串）或区块哈希（十进制字符串）
 	//     支持的特殊值："latest"（最新区块）、"earliest"（创世区块）、"pending"（待打包区块）
 	//   - fullTx: 如果为true则返回完整的交易对象，否则仅返回交易哈希
 	// 返回:

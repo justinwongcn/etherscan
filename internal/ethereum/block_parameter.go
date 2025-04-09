@@ -13,9 +13,16 @@ import (
 // 将用户输入的区块标识符转换为以太坊API支持的格式
 // 参数:
 //   - blockHashOrNumber: 区块标识符，可以是区块号、区块哈希或特殊标识符
+//   - 空字符串: 将被解析为"latest"
+//   - 特殊标识符: "latest"(最新区块)、"earliest"(创世区块)、"pending"(待处理区块)
+//   - 区块哈希: 以"0x"开头的64位十六进制字符串
+//   - 区块号: 十进制数字字符串
 //
 // 返回:
 //   - string: 标准化后的区块参数
+//   - 特殊标识符: 返回小写的标识符字符串
+//   - 区块哈希: 保持原样返回
+//   - 区块号: 转换为"0x"前缀的十六进制格式
 //   - error: 如果解析过程中发生错误，将返回相应的错误信息
 func ParseBlockParameter(blockHashOrNumber string) (string, error) {
 	// 如果是空字符串，默认使用latest

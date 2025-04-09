@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/justinwongcn/etherscan/api/handler"
+	"github.com/justinwongcn/etherscan/api/routes"
 	"github.com/justinwongcn/etherscan/application/service"
 	"github.com/justinwongcn/etherscan/internal/ethereum"
 )
@@ -21,25 +22,18 @@ func main() {
 	// 初始化服务层
 	blockService := service.NewBlockService(client)
 	transactionService := service.NewTransactionService(client)
+	accountService := service.NewAccountService(client)
 
 	// 初始化处理器
 	blockHandler := handler.NewBlockHandler(blockService)
 	transactionHandler := handler.NewTransactionHandler(transactionService)
+	accountHandler := handler.NewAccountHandler(accountService)
 
 	// 设置Gin路由
 	r := gin.Default()
 
-	// 注册区块相关路由
-	r.GET("/block/height", blockHandler.GetBlockHeight)
-	r.GET("/block/:number", blockHandler.GetBlock)
-	r.GET("/block/count/:number", blockHandler.GetBlockTransactionCount)
-
-	// 注册交易相关路由
-	r.GET("/account/count/:address", transactionHandler.GetTransactionCount)
-	r.GET("/tx/:hash", transactionHandler.GetTransactionByHash)
-	r.GET("/tx/:hash/receipt", transactionHandler.GetTransactionReceipt)
-	r.GET("/block/tx/:index", transactionHandler.GetTransactionByIndex)
-	r.POST("/tx/send", transactionHandler.SendRawTransaction)
+	// 注册路由
+	routes.RegisterRoutes(r, blockHandler, transactionHandler, accountHandler)
 
 	// 启动服务器
 	if err := r.Run(":8080"); err != nil {

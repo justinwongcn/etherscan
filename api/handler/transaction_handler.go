@@ -30,7 +30,7 @@ func NewTransactionHandler(transactionService service.TransactionServiceInterfac
 }
 
 // GetTransactionByHash 处理获取交易信息的HTTP请求
-// 请求路径: GET /transaction/:hash
+// 请求路径: GET /transactions/:hash
 // 路径参数:
 //   - hash: 交易哈希（32字节的十六进制字符串）
 //
@@ -66,7 +66,7 @@ func (h *TransactionHandler) GetTransactionByHash(c *gin.Context) {
 }
 
 // GetTransactionByIndex 处理获取指定区块中特定索引位置交易的HTTP请求
-// 请求路径: GET /block/tx/:index
+// 请求路径: GET /blocks/:number/transactions/:index
 // 路径参数:
 //   - index: 交易在区块中的索引位置（从0开始的整数）
 //
@@ -119,7 +119,7 @@ type SendRawTransactionRequest struct {
 }
 
 // SendRawTransaction 处理发送已签名交易的HTTP请求
-// 请求路径: POST /tx/send
+// 请求路径: POST /transactions
 // 请求体:
 //   - signedTxData: 已签名的交易数据（十六进制格式，以0x开头）
 //
@@ -151,7 +151,7 @@ func (h *TransactionHandler) SendRawTransaction(c *gin.Context) {
 }
 
 // GetTransactionCount 处理获取账户交易数量的HTTP请求
-// 请求路径: GET /account/:address/count
+// 请求路径: GET /accounts/:address/transactions/count
 // 路径参数:
 //   - address: 以太坊账户地址
 //
@@ -198,7 +198,7 @@ func (h *TransactionHandler) GetTransactionCount(c *gin.Context) {
 }
 
 // GetTransactionReceipt 处理获取交易收据的HTTP请求
-// 请求路径: GET /tx/:hash/receipt
+// 请求路径: GET /transactions/:hash/receipt
 // 路径参数:
 //   - hash: 交易哈希（32字节的十六进制字符串）
 //
