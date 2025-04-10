@@ -17,7 +17,7 @@ import (
 // 路由配置:
 //
 // 区块相关路由:
-//  1. GET /blocks/latest/height
+//  1. GET /blocks/height/latest
 //     获取以太坊网络的最新区块高度
 //     响应格式:
 //     - 成功: {"height": <区块高度数值>}
@@ -107,7 +107,7 @@ import (
 //     - 500: 服务器内部错误（包括交易广播失败）
 //
 // 账户相关路由:
-//  8. GET /accounts/:address/balance
+//  8. GET /accounts/balance/:address
 //     获取指定地址的账户余额
 //     路径参数:
 //     - address: 以太坊地址（20字节的十六进制字符串，0x开头）
@@ -118,7 +118,22 @@ import (
 //     - 400: 请求参数错误（地址格式无效）
 //     - 500: 服务器内部错误
 //
-//  9. GET /accounts/:address/transactions/count
+//  9. GET /accounts/balances/:addresses
+//     批量获取多个账户的余额
+//     路径参数:
+//     - addresses: 以太坊地址列表（多个地址以逗号分隔的20字节十六进制字符串，0x开头）
+//     查询参数:
+//     - block: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
+//     支持的特殊值：latest（最新区块）、earliest（创世区块）、pending（待打包区块）
+//     默认值：latest
+//     响应格式:
+//     - 成功: {"balances": {"address1": "balance1", "address2": "balance2", ...}}
+//     - 失败: {"error": <错误信息>}
+//     错误码:
+//     - 400: 请求参数错误（地址格式无效或地址列表为空）
+//     - 500: 服务器内部错误
+//
+//  10. GET /accounts/:address/transactions/count
 //     获取指定地址在特定区块的交易数量
 //     路径参数:
 //     - address: 以太坊账户地址（20字节的十六进制字符串，0x开头）
@@ -135,7 +150,7 @@ import (
 
 func RegisterRoutes(r *gin.Engine, blockHandler *handler.BlockHandler, transactionHandler *handler.TransactionHandler, accountHandler *handler.AccountHandler) {
 	// 区块相关路由
-	r.GET("/blocks/latest/height", blockHandler.GetBlockHeight)
+	r.GET("/blocks/height/latest", blockHandler.GetBlockHeight)
 	r.GET("/blocks/:number", blockHandler.GetBlock)
 	r.GET("/blocks/:number/transactions/count", blockHandler.GetBlockTransactionCount)
 	r.GET("/blocks/:number/transactions/:index", transactionHandler.GetTransactionByIndex)
@@ -146,6 +161,7 @@ func RegisterRoutes(r *gin.Engine, blockHandler *handler.BlockHandler, transacti
 	r.POST("/transactions", transactionHandler.SendRawTransaction)
 
 	// 账户相关路由
-	r.GET("/accounts/:address/balance", accountHandler.GetBalance)
+	r.GET("/accounts/balance/:address", accountHandler.GetBalance)
+	r.GET("/accounts/balances/:addresses", accountHandler.GetBalances)
 	r.GET("/accounts/:address/transactions/count", transactionHandler.GetTransactionCount)
 }
