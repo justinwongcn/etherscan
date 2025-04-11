@@ -1,0 +1,12 @@
+### 获取最新区块高度
+
+# curl --location 'http://localhost:8080/blocks/height/latest'
+### 检查400状态码
+GET http://localhost:8080/blocks/height/latest
+
+> {%
+  client.test("响应状态码是否为200", function() {
+    client.assert(response.status === 200, "响应状态码不是200");
+  });
+%}
+

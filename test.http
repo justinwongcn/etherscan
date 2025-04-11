@@ -1,3 +1,0 @@
-### 获取最新区块高度
-GET http://localhost:8080/block/height
-Accept: application/json

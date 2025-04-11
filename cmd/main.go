@@ -14,7 +14,7 @@ import (
 func main() {
 	// 创建以太坊客户端
 	opts := ethereum.DefaultClientOptions()
-	client, err := ethereum.NewClient(context.Background(), "https://eth-mainnet.public.blastapi.io", opts)
+	client, err := ethereum.NewClient(context.Background(), "https://endpoints.omniatech.io/v1/eth/mainnet/public", opts)
 	if err != nil {
 		log.Fatalf("Failed to create ethereum client: %v", err)
 	}
