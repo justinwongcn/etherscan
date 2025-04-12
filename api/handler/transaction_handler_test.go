@@ -330,7 +330,16 @@ func TestGetTransactionByIndex(t *testing.T) {
 		expectedBody   map[string]any
 	}{
 		{
-			name:           "通过区块号和索引获取交易成功",
+			name:           "区块参数缺失",
+			blockParam:     "",
+			index:          "0",
+			mockTx:         nil,
+			mockError:      nil,
+			expectedStatus: http.StatusBadRequest,
+			expectedBody:   map[string]any{"error": "block number or hash is required"},
+		},
+		{
+			name:           "通过区块号查询",
 			blockParam:     "12345",
 			index:          "0",
 			mockTx:         mockTransaction,
@@ -339,18 +348,9 @@ func TestGetTransactionByIndex(t *testing.T) {
 			expectedBody:   map[string]any{"transaction": mockTransaction},
 		},
 		{
-			name:           "通过区块哈希和索引获取交易成功",
+			name:           "通过区块哈希查询",
 			blockParam:     "0x1234567890abcdef",
 			index:          "1",
-			mockTx:         mockTransaction,
-			mockError:      nil,
-			expectedStatus: http.StatusOK,
-			expectedBody:   map[string]any{"transaction": mockTransaction},
-		},
-		{
-			name:           "区块参数为空时使用latest",
-			blockParam:     "",
-			index:          "0",
 			mockTx:         mockTransaction,
 			mockError:      nil,
 			expectedStatus: http.StatusOK,
@@ -383,13 +383,9 @@ func TestGetTransactionByIndex(t *testing.T) {
 			mockService := new(MockTransactionService)
 
 			// 如果参数有效，设置mock期望
-			if tt.index != "invalid" {
+			if tt.blockParam != "" && tt.index != "invalid" {
 				index, _ := strconv.ParseUint(tt.index, 10, 64)
-				expectedBlockParam := "latest"
-				if tt.blockParam != "" {
-					expectedBlockParam = tt.blockParam
-				}
-				mockService.On("GetTransactionByIndex", mock.Anything, expectedBlockParam, index).Return(tt.mockTx, tt.mockError)
+				mockService.On("GetTransactionByIndex", mock.Anything, tt.blockParam, index).Return(tt.mockTx, tt.mockError)
 			}
 
 			// 创建handler
@@ -406,11 +402,11 @@ func TestGetTransactionByIndex(t *testing.T) {
 			}
 
 			// 创建HTTP请求
-			url := fmt.Sprintf("/api/block/tx/%s", tt.index)
+			reqURL := fmt.Sprintf("/api/block/tx/%s", tt.index)
 			if tt.blockParam != "" {
-				url = fmt.Sprintf("%s?number=%s", url, tt.blockParam)
+				reqURL += fmt.Sprintf("?number=%s", tt.blockParam)
 			}
-			req := httptest.NewRequest(http.MethodGet, url, nil)
+			req, _ := http.NewRequest(http.MethodGet, reqURL, nil)
 			c.Request = req
 
 			// 调用接口

@@ -26,7 +26,7 @@ func NewAccountHandler(accountService service.AccountServiceInterface) *AccountH
 // 查询参数:
 //   - block: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
 //     支持的特殊值: "latest"（最新区块）、"earliest"（创世区块）、"pending"（待打包区块）
-//     默认值: "latest"
+// 	   默认值: latest
 //
 // 响应格式:
 //   - 成功: {"balance": <账户余额字符串>}
@@ -43,7 +43,7 @@ func (h *AccountHandler) GetBalance(c *gin.Context) {
 		return
 	}
 
-	// 获取区块号参数，默认为"latest"
+	// 获取区块号参数
 	block := c.DefaultQuery("block", "latest")
 
 	// 调用服务层获取余额
@@ -65,7 +65,7 @@ func (h *AccountHandler) GetBalance(c *gin.Context) {
 // 查询参数:
 //   - block: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
 //     支持的特殊值: "latest"（最新区块）、"earliest"（创世区块）、"pending"（待打包区块）
-//     默认值: "latest"
+// 	   默认值: latest
 //
 // 响应格式:
 //   - 成功: {"balances": {"address1": "balance1", "address2": "balance2", ...}}

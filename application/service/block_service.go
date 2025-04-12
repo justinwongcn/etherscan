@@ -4,7 +4,6 @@ package service
 import (
 	"context"
 	"fmt"
-	"math/big"
 
 	"github.com/justinwongcn/etherscan/domain"
 	"github.com/justinwongcn/etherscan/internal/ethereum"
@@ -54,26 +53,6 @@ func (s *BlockService) GetLatestBlockHeight(ctx context.Context) (string, error)
 // 返回:
 //   - string: 转换后的标准格式参数
 //   - error: 如果参数格式无效，将返回错误信息
-func (s *BlockService) parseBlockParameter(blockHashOrNumber string) (string, error) {
-	// 判断是否为区块哈希（以0x开头的十六进制字符串）
-	if len(blockHashOrNumber) >= 2 && blockHashOrNumber[:2] == "0x" {
-		return blockHashOrNumber, nil
-	}
-	// 判断是否为特殊标识符
-	if blockHashOrNumber == ethereum.BlockLatest || blockHashOrNumber == ethereum.BlockEarliest || blockHashOrNumber == ethereum.BlockPending {
-		return blockHashOrNumber, nil
-	}
-
-	// 将字符串转换为big.Int
-	number := new(big.Int)
-	_, ok := number.SetString(blockHashOrNumber, 10)
-	if !ok {
-		return "", fmt.Errorf("invalid block number: %s", blockHashOrNumber)
-	}
-
-	// 转换为十六进制格式并添加0x前缀
-	return fmt.Sprintf("0x%x", number), nil
-}
 
 // GetBlock 实现了BlockServiceInterface接口中的同名方法
 // 根据区块标识符获取区块的详细信息
@@ -95,7 +74,7 @@ func (s *BlockService) GetBlock(ctx context.Context, blockHashOrNumber string, f
 	// 根据参数类型选择适当的查询方法
 	// 如果是区块哈希（以0x开头且长度大于10的十六进制字符串）
 	var ethBlock *eth.Block
-	if len(param) >= 2 && param[:2] == "0x" && len(param) > 10 {
+	if len(blockHashOrNumber) >= 2 && blockHashOrNumber[:2] == "0x" && len(blockHashOrNumber) > 10 {
 		ethBlock, err = s.client.GetBlockByHash(ctx, param, fullTx)
 	} else {
 		ethBlock, err = s.client.GetBlockByNumber(ctx, param, fullTx)
@@ -120,7 +99,7 @@ func (s *BlockService) GetBlock(ctx context.Context, blockHashOrNumber string, f
 //   - error: 如果查询过程中发生错误，将返回相应的错误信息
 func (s *BlockService) GetBlockTransactionCount(ctx context.Context, blockHashOrNumber string) (string, error) {
 	// 解析并标准化区块参数
-	param, err := s.parseBlockParameter(blockHashOrNumber)
+	param, err := ethereum.ParseBlockParameter(blockHashOrNumber)
 	if err != nil {
 		return "", err
 	}
@@ -133,6 +112,7 @@ func (s *BlockService) GetBlockTransactionCount(ctx context.Context, blockHashOr
 	} else {
 		count, err = s.client.GetBlockTransactionCountByNumber(ctx, param)
 	}
+
 	if err != nil {
 		return "", err
 	}
@@ -151,7 +131,7 @@ func (s *BlockService) GetBlockTransactionCount(ctx context.Context, blockHashOr
 //   - error: 如果查询过程中发生错误，将返回相应的错误信息
 func (s *BlockService) GetTransactionCount(ctx context.Context, address string, blockHashOrNumber string) (string, error) {
 	// 解析并标准化区块参数
-	param, err := s.parseBlockParameter(blockHashOrNumber)
+	param, err := ethereum.ParseBlockParameter(blockHashOrNumber)
 	if err != nil {
 		return "", err
 	}
@@ -190,7 +170,7 @@ func (s *BlockService) GetTransactionByHash(ctx context.Context, txHash string) 
 //   - error: 如果查询过程中发生错误，将返回相应的错误信息
 func (s *BlockService) GetTransactionByIndex(ctx context.Context, blockHashOrNumber string, index uint64) (*eth.Transaction, error) {
 	// 解析并标准化区块参数
-	param, err := s.parseBlockParameter(blockHashOrNumber)
+	param, err := ethereum.ParseBlockParameter(blockHashOrNumber)
 	if err != nil {
 		return nil, err
 	}

@@ -55,20 +55,22 @@ import (
 //     - 404: 区块未找到
 //     - 500: 服务器内部错误
 //
-//  4. GET /blocks/:number/transactions/:index
+//  4. GET /blocks/transactions/:index
 //     获取指定区块中特定索引位置的交易信息
 //     路径参数:
-//     - number: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
-//     支持的特殊值：latest（最新区块）、earliest（创世区块）、pending（待打包区块）
-//     默认值：latest
 //     - index: 交易在区块中的索引位置（从0开始的整数）
+//
+//     查询参数:
+//     - number: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
+//     支持的特殊值: "latest"（最新区块）、"earliest"（创世区块）、"pending"（待打包区块）
+//
 //     响应格式:
 //     - 成功: {"transaction": {"hash": <交易哈希>, "from": <发送方地址>, "to": <接收方地址>, ...}}
 //     - 失败: {"error": <错误信息>}
+//
 //     错误码:
-//     - 400: 请求参数错误（区块号或索引格式无效）
-//     - 404: 区块或交易未找到
-//     - 500: 服务器内部错误
+//     - 400: 请求参数错误（交易索引格式无效）
+//     - 500: 服务器内部错误（包括区块参数错误或交易查询失败）
 //
 // 交易相关路由:
 //  5. GET /transactions/:hash
@@ -111,6 +113,10 @@ import (
 //     获取指定地址的账户余额
 //     路径参数:
 //     - address: 以太坊地址（20字节的十六进制字符串，0x开头）
+//     查询参数:
+//     - block: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
+//     支持的特殊值：latest（最新区块）、earliest（创世区块）、pending（待打包区块）
+//	   默认值：latest
 //     响应格式:
 //     - 成功: {"balance": <账户余额（单位：wei）>}
 //     - 失败: {"error": <错误信息>}
@@ -125,7 +131,7 @@ import (
 //     查询参数:
 //     - block: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
 //     支持的特殊值：latest（最新区块）、earliest（创世区块）、pending（待打包区块）
-//     默认值：latest
+//	   默认值：latest
 //     响应格式:
 //     - 成功: {"balances": {"address1": "balance1", "address2": "balance2", ...}}
 //     - 失败: {"error": <错误信息>}
@@ -140,7 +146,6 @@ import (
 //     查询参数:
 //     - number: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
 //     支持的特殊值：latest（最新区块）、earliest（创世区块）、pending（待打包区块）
-//     默认值：latest
 //     响应格式:
 //     - 成功: {"count": <交易数量>}
 //     - 失败: {"error": <错误信息>}
@@ -153,7 +158,7 @@ func RegisterRoutes(r *gin.Engine, blockHandler *handler.BlockHandler, transacti
 	r.GET("/blocks/height/latest", blockHandler.GetBlockHeight)
 	r.GET("/blocks/:number", blockHandler.GetBlock)
 	r.GET("/blocks/:number/transactions/count", blockHandler.GetBlockTransactionCount)
-	r.GET("/blocks/:number/transactions/:index", transactionHandler.GetTransactionByIndex)
+	r.GET("/blocks/transactions/:index", transactionHandler.GetTransactionByIndex)
 
 	// 交易相关路由
 	r.GET("/transactions/:hash", transactionHandler.GetTransactionByHash)

@@ -85,25 +85,6 @@ func (c *Client) withConnection(ctx context.Context, fn func(node.Client) (any, 
 	return fn(conn)
 }
 
-// getDefaultNumberOrTag 处理区块号或标签的默认值
-//
-// Parameters:
-//   - numberOrTag: string 区块号或标签，可以是以下格式：
-//   - 十六进制字符串（如"0x1"）表示具体区块号
-//   - "latest" - 最新区块
-//   - "earliest" - 创世区块
-//   - "pending" - 待处理区块
-//   - 空字符串 - 将被转换为"latest"
-//
-// Returns:
-//   - string: 处理后的区块号或标签
-func getDefaultNumberOrTag(numberOrTag string) string {
-	if numberOrTag == "" {
-		return "latest"
-	}
-	return numberOrTag
-}
-
 // GasPrice 获取当前 gas 价格
 //
 // Parameters:
@@ -161,8 +142,8 @@ func (c *Client) Call(ctx context.Context, from, to string, gas, gasPrice, value
 		fromAddr = addr
 	}
 
-	// 处理默认值并验证区块号格式
-	numOrTag := eth.MustBlockNumberOrTag(getDefaultNumberOrTag(numberOrTag))
+	// 验证区块号格式
+	numOrTag := eth.MustBlockNumberOrTag(numberOrTag)
 	if numOrTag == nil {
 		return "", fmt.Errorf("invalid block number or tag: %s", numberOrTag)
 	}

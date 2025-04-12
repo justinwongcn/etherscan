@@ -6,7 +6,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/justinwongcn/etherscan/application/service"
-	"github.com/justinwongcn/etherscan/internal/ethereum"
 )
 
 // BlockHandler 区块处理器，负责处理与以太坊区块相关的HTTP请求
@@ -70,10 +69,6 @@ func (h *BlockHandler) GetBlockHeight(c *gin.Context) {
 func (h *BlockHandler) GetBlock(c *gin.Context) {
 	// 从URL路径中获取区块号或哈希
 	blockParam := c.Param("number")
-	// 如果参数为空，则使用latest
-	if blockParam == "" {
-		blockParam = ethereum.BlockLatest
-	}
 
 	// 获取fullTx查询参数，默认为true
 	fullTx := true
@@ -111,10 +106,6 @@ func (h *BlockHandler) GetBlock(c *gin.Context) {
 func (h *BlockHandler) GetBlockTransactionCount(c *gin.Context) {
 	// 从URL路径中获取区块号或哈希
 	blockParam := c.Param("number")
-	// 如果参数为空，则使用latest
-	if blockParam == "" {
-		blockParam = ethereum.BlockLatest
-	}
 
 	// 获取交易数量
 	count, err := h.blockService.GetBlockTransactionCount(c.Request.Context(), blockParam)

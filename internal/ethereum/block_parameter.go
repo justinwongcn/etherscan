@@ -25,11 +25,6 @@ import (
 //   - 区块号: 转换为"0x"前缀的十六进制格式
 //   - error: 如果解析过程中发生错误，将返回相应的错误信息
 func ParseBlockParameter(blockHashOrNumber string) (string, error) {
-	// 如果是空字符串，默认使用latest
-	if blockHashOrNumber == "" {
-		return BlockLatest, nil
-	}
-
 	// 处理特殊标识符
 	switch strings.ToLower(blockHashOrNumber) {
 	case BlockLatest, BlockEarliest, BlockPending:

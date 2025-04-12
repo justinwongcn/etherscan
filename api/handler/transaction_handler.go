@@ -83,9 +83,12 @@ func (h *TransactionHandler) GetTransactionByHash(c *gin.Context) {
 func (h *TransactionHandler) GetTransactionByIndex(c *gin.Context) {
 	// 从查询参数中获取区块号或哈希
 	blockParam := c.Query("number")
-	// 如果参数为空，则使用latest
+	// 如果参数为空，则返回错误信息
 	if blockParam == "" {
-		blockParam = ethereum.BlockLatest
+		c.JSON(http.StatusBadRequest, gin.H{
+			"error": "block number or hash is required",
+		})
+		return
 	}
 
 	// 获取交易索引参数并转换为uint64

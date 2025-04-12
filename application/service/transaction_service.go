@@ -71,7 +71,7 @@ func (s *TransactionService) GetTransactionByIndex(ctx context.Context, blockHas
 	// 根据参数类型选择适当的查询方法
 	// 如果是区块哈希（以0x开头且长度大于10的十六进制字符串）
 	var ethTx *eth.Transaction
-	if len(param) >= 2 && param[:2] == "0x" && len(param) > 10 {
+	if len(blockHashOrNumber) >= 2 && blockHashOrNumber[:2] == "0x" && len(blockHashOrNumber) > 10 {
 		ethTx, err = s.client.GetTransactionByBlockHashAndIndex(ctx, param, index)
 	} else {
 		ethTx, err = s.client.GetTransactionByBlockNumberAndIndex(ctx, param, index)

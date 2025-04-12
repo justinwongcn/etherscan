@@ -66,7 +66,7 @@ func (c *Client) GetBlockTransactionCountByHash(ctx context.Context, blockHash s
 //   - 节点连接错误
 func (c *Client) GetBlockTransactionCountByNumber(ctx context.Context, numberOrTag string) (uint64, error) {
 	// 处理默认值并验证区块号格式
-	numOrTag := eth.MustBlockNumberOrTag(getDefaultNumberOrTag(numberOrTag))
+	numOrTag := eth.MustBlockNumberOrTag(numberOrTag)
 	if numOrTag == nil {
 		return 0, fmt.Errorf("invalid block number or tag: %s", numberOrTag)
 	}
@@ -129,8 +129,8 @@ func (c *Client) GetBlockByHash(ctx context.Context, blockHash string, fullTx bo
 //   - 节点连接错误
 //   - 区块不存在
 func (c *Client) GetBlockByNumber(ctx context.Context, numberOrTag string, fullTx bool) (*eth.Block, error) {
-	// 处理默认值并验证区块号格式
-	numOrTag := eth.MustBlockNumberOrTag(getDefaultNumberOrTag(numberOrTag))
+	// 验证区块号格式
+	numOrTag := eth.MustBlockNumberOrTag(numberOrTag)
 	if numOrTag == nil {
 		return nil, fmt.Errorf("invalid block number or tag: %s", numberOrTag)
 	}
@@ -194,7 +194,7 @@ func (c *Client) GetUncleByBlockHashAndIndex(ctx context.Context, blockHash stri
 //   - 叔块不存在
 func (c *Client) GetUncleByBlockNumberAndIndex(ctx context.Context, numberOrTag string, index uint64) (*eth.Block, error) {
 	// 处理默认值并验证区块号格式
-	numOrTag := eth.MustBlockNumberOrTag(getDefaultNumberOrTag(numberOrTag))
+	numOrTag := eth.MustBlockNumberOrTag(numberOrTag)
 	if numOrTag == nil {
 		return nil, fmt.Errorf("invalid block number or tag: %s", numberOrTag)
 	}

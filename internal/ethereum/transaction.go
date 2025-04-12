@@ -33,7 +33,7 @@ func (c *Client) GetTransactionCount(ctx context.Context, address string, number
 	}
 
 	// 验证并转换区块号格式
-	numOrTag := eth.MustBlockNumberOrTag(getDefaultNumberOrTag(numberOrTag))
+	numOrTag := eth.MustBlockNumberOrTag(numberOrTag)
 	if numOrTag == nil {
 		return 0, fmt.Errorf("invalid block number or tag: %s", numberOrTag)
 	}
@@ -153,7 +153,7 @@ func (c *Client) GetTransactionByBlockHashAndIndex(ctx context.Context, blockHas
 //   - 交易不存在
 func (c *Client) GetTransactionByBlockNumberAndIndex(ctx context.Context, numberOrTag string, index uint64) (*eth.Transaction, error) {
 	// 处理默认值并验证区块号格式
-	numOrTag := eth.MustBlockNumberOrTag(getDefaultNumberOrTag(numberOrTag))
+	numOrTag := eth.MustBlockNumberOrTag(numberOrTag)
 	if numOrTag == nil {
 		return nil, fmt.Errorf("invalid block number or tag: %s", numberOrTag)
 	}
