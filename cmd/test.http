@@ -1,4 +1,4 @@
-### 获取最新区块高度，保存 height 和 height_minus_10 到环境变量
+### 获取最新区块高度，保存 height 和 height_minus_10, height_minus_11 到环境变量
 
 # curl --location 'http://localhost:8080/blocks/height/latest'
 ### 检查400状态码
@@ -6,9 +6,9 @@ GET http://localhost:8080/blocks/height/latest
 
 > {%
   client.test("响应状态码是否为200", function() {
-    client.assert(response.status === 200, "响应状态码不是200");
+    client.assert(response.status == 200, "响应状态码不是200");
     const height = response.body.height;
-    client.assert(typeof height === "string", "height 不是一个字符串");
+    client.assert(typeof height == "string", "height 不是一个字符串");
     client.assert(parseInt(height, 10) > 0, "height 不是一个正数");
     
     // 保存原始高度
@@ -27,12 +27,12 @@ GET http://localhost:8080/blocks/height/latest
   });
 %}
 
-### 获取指定区块信息，保存交易数量 txCount 和区块哈希 blockHash 到环境变量
+### 获取指定 height_minus_10 区块信息，保存交易数量 txCount 和区块哈希 blockHash 到环境变量
 GET http://localhost:8080/blocks/{{height_minus_10}}
 
 > {%
   client.test("响应状态码是否为200", function() {
-    client.assert(response.status === 200, "响应状态码不是200");
+    client.assert(response.status == 200, "响应状态码不是200");
     client.assert(response.body.hasOwnProperty('block'), "响应中缺少block字段");
     
     // 验证transactions字段
@@ -66,7 +66,7 @@ GET http://localhost:8080/blocks/{{height_minus_10}}
       client.assert(tx.hasOwnProperty('transactionIndex'), `第${index}个交易缺少transactionIndex字段`);
       
       // 验证type为3的交易特有字段
-      if (tx.type === "3") {
+      if (tx.type == "3") {
         client.assert(tx.hasOwnProperty('maxFeePerBlobGas'), `第${index}个交易缺少maxFeePerBlobGas字段`);
         client.assert(tx.hasOwnProperty('blobVersionedHashes'), `第${index}个交易缺少blobVersionedHashes字段`);
         client.assert(Array.isArray(tx.blobVersionedHashes), `第${index}个交易的blobVersionedHashes不是数组类型`);
@@ -75,12 +75,12 @@ GET http://localhost:8080/blocks/{{height_minus_10}}
   });
 %}
 
-### 获取指定区块信息（包含完整交易信息）
+### 获取指定 height_minus_10 的 blockHash 区块信息（包含完整交易信息）
 GET http://localhost:8080/blocks/{{blockHash}}?fullTx=true
 
 > {%
   client.test("响应状态码是否为200", function() {
-    client.assert(response.status === 200, "响应状态码不是200");
+    client.assert(response.status == 200, "响应状态码不是200");
     client.assert(response.body.hasOwnProperty('block'), "响应中缺少block字段");
     
     // 验证transactions字段
@@ -107,7 +107,7 @@ GET http://localhost:8080/blocks/{{blockHash}}?fullTx=true
       client.assert(tx.hasOwnProperty('transactionIndex'), `第${index}个交易缺少transactionIndex字段`);
       
       // 验证type为3的交易特有字段
-      if (tx.type === "3") {
+      if (tx.type == "3") {
         client.assert(tx.hasOwnProperty('maxFeePerBlobGas'), `第${index}个交易缺少maxFeePerBlobGas字段`);
         client.assert(tx.hasOwnProperty('blobVersionedHashes'), `第${index}个交易缺少blobVersionedHashes字段`);
         client.assert(Array.isArray(tx.blobVersionedHashes), `第${index}个交易的blobVersionedHashes不是数组类型`);
@@ -116,12 +116,12 @@ GET http://localhost:8080/blocks/{{blockHash}}?fullTx=true
   });
 %}
 
-### 获取指定区块信息（不包含完整交易信息），保存前三个交易哈希到环境变量
+### 获取指定 height_minus_10 区块信息（不包含完整交易信息），保存前三个交易哈希到环境变量
 GET http://localhost:8080/blocks/{{height_minus_10}}?fullTx=false
 
 > {%
   client.test("响应状态码是否为200", function() {
-    client.assert(response.status === 200, "响应状态码不是200");
+    client.assert(response.status == 200, "响应状态码不是200");
     client.assert(response.body.hasOwnProperty('block'), "响应中缺少block字段");
     
     // 验证transactions字段
@@ -135,9 +135,9 @@ GET http://localhost:8080/blocks/{{height_minus_10}}?fullTx=false
     // 验证transactions数组中的前三个交易哈希
     const transactionsToCheck = block.transactions.slice(0, 3);
     transactionsToCheck.forEach((txHash, index) => {
-      client.assert(typeof txHash === "string", `第${index}个交易哈希不是字符串类型`);
+      client.assert(typeof txHash == "string", `第${index}个交易哈希不是字符串类型`);
       client.assert(txHash.startsWith("0x"), `第${index}个交易哈希不是以0x开头的十六进制字符串`);
-      client.assert(txHash.length === 66, `第${index}个交易哈希长度不是66个字符`);
+      client.assert(txHash.length == 66, `第${index}个交易哈希长度不是66个字符`);
       
       // 保存交易哈希到环境变量
       client.global.set(`tx_hash_${index}`, txHash);
@@ -146,29 +146,29 @@ GET http://localhost:8080/blocks/{{height_minus_10}}?fullTx=false
   });
 %}
 
-### 获取指定区块的交易数量（使用环境变量中的height）
+### 获取指定 height_minus_10 区块的交易数量（使用环境变量中的height_minus_10）
 GET http://localhost:8080/blocks/{{height_minus_10}}/transactions/count
 
 > {%
   client.test("响应状态码是否为200", function() {
-    client.assert(response.status === 200, "响应状态码不是200");
+    client.assert(response.status == 200, "响应状态码不是200");
     client.assert(response.body.hasOwnProperty('count'), "响应中缺少count字段");
     const count = response.body.count;
-    client.assert(typeof count === "string", "count 不是一个字符串");
+    client.assert(typeof count == "string", "count 不是一个字符串");
     client.assert(parseInt(count, 10) >= 0, "count 不是一个非负数");
     
     // 验证count与环境变量中的txCount是否相等
     const txCount = client.global.get("txCount");
-    client.assert(count === txCount, `交易数量不匹配：API返回 ${count}，环境变量中为 ${txCount}`);
+    client.assert(count == txCount, `交易数量不匹配：API返回 ${count}，环境变量中为 ${txCount}`);
   });
 %}
 
-### 获取指定区块中特定索引位置的交易信息（使用环境变量中的height）
+### 获取指定 height_minus_10 区块中特定索引位置的交易信息（使用环境变量中的height_minus_10）
 GET http://localhost:8080/blocks/transactions/0?number={{height_minus_10}}
 
 > {%
   client.test("响应状态码是否为200", function() {
-    client.assert(response.status === 200, "响应状态码不是200");
+    client.assert(response.status == 200, "响应状态码不是200");
     client.assert(response.body.hasOwnProperty('transaction'), "响应中缺少transaction字段");
     
     const tx = response.body.transaction;
@@ -191,7 +191,7 @@ GET http://localhost:8080/blocks/transactions/0?number={{height_minus_10}}
 
     // 验证交易哈希是否与环境变量中的值匹配
     const expectedHash = client.global.get("tx_hash_0");
-    client.assert(tx.hash === expectedHash, `交易哈希不匹配：API返回 ${tx.hash}，环境变量中为 ${expectedHash}`);
+    client.assert(tx.hash == expectedHash, `交易哈希不匹配：API返回 ${tx.hash}，环境变量中为 ${expectedHash}`);
   
     // 保存交易的from和to地址到环境变量
     client.global.set("from_0", response.body.transaction.from);
@@ -206,7 +206,7 @@ GET http://localhost:8080/blocks/transactions/1?number={{blockHash}}
 
 > {%
   client.test("响应状态码是否为200", function() {
-    client.assert(response.status === 200, "响应状态码不是200");
+    client.assert(response.status == 200, "响应状态码不是200");
     client.assert(response.body.hasOwnProperty('transaction'), "响应中缺少transaction字段");
     
     const tx = response.body.transaction;
@@ -224,7 +224,7 @@ GET http://localhost:8080/blocks/transactions/1?number={{blockHash}}
   
     // 验证交易哈希是否与环境变量中的值匹配
     const expectedHash = client.global.get("tx_hash_1");
-    client.assert(tx.hash === expectedHash, `交易哈希不匹配：API返回 ${tx.hash}，环境变量中为 ${expectedHash}`);
+    client.assert(tx.hash == expectedHash, `交易哈希不匹配：API返回 ${tx.hash}，环境变量中为 ${expectedHash}`);
 
     // 保存交易的from和to地址到环境变量
     client.global.set("from_1", response.body.transaction.from);
@@ -239,7 +239,7 @@ GET http://localhost:8080/transactions/{{tx_hash_2}}
 
 > {%
   client.test("响应状态码是否为200", function() {
-    client.assert(response.status === 200, "响应状态码不是200");
+    client.assert(response.status == 200, "响应状态码不是200");
     client.assert(response.body.hasOwnProperty('transaction'), "响应中缺少transaction字段");
     
     const tx = response.body.transaction;
@@ -262,7 +262,7 @@ GET http://localhost:8080/transactions/{{tx_hash_2}}
 
     // 验证交易哈希是否与环境变量中的值匹配
     const expectedHash = client.global.get("tx_hash_2");
-    client.assert(tx.hash === expectedHash, `交易哈希不匹配：API返回 ${tx.hash}，环境变量中为 ${expectedHash}`);
+    client.assert(tx.hash == expectedHash, `交易哈希不匹配：API返回 ${tx.hash}，环境变量中为 ${expectedHash}`);
 
     // 保存交易的from和to地址到环境变量
     client.global.set("from_2", response.body.transaction.from);
@@ -277,7 +277,7 @@ GET http://localhost:8080/transactions/{{tx_hash_0}}/receipt
 
 > {%
   client.test("响应状态码是否为200", function() {
-    client.assert(response.status === 200, "响应状态码不是200");
+    client.assert(response.status == 200, "响应状态码不是200");
     client.assert(response.body.hasOwnProperty('receipt'), "响应中缺少receipt字段");
     
     const receipt = response.body.receipt;
@@ -292,37 +292,37 @@ GET http://localhost:8080/transactions/{{tx_hash_0}}/receipt
     
     // 验证交易哈希是否与环境变量中的值匹配
     const expectedHash = client.global.get("tx_hash_0");
-    client.assert(receipt.transactionHash === expectedHash, `交易哈希不匹配：API返回 ${receipt.transactionHash}，环境变量中为 ${expectedHash}`);
+    client.assert(receipt.transactionHash == expectedHash, `交易哈希不匹配：API返回 ${receipt.transactionHash}，环境变量中为 ${expectedHash}`);
     
     // 验证from和to地址是否与环境变量中的值匹配
     const expectedFrom = client.global.get("from_0");
     const expectedTo = client.global.get("to_0");
-    client.assert(receipt.from === expectedFrom, `发送方地址不匹配：API返回 ${receipt.from}，环境变量中为 ${expectedFrom}`);
-    client.assert(receipt.to === expectedTo, `接收方地址不匹配：API返回 ${receipt.to}，环境变量中为 ${expectedTo}`);
+    client.assert(receipt.from == expectedFrom, `发送方地址不匹配：API返回 ${receipt.from}，环境变量中为 ${expectedFrom}`);
+    client.assert(receipt.to == expectedTo, `接收方地址不匹配：API返回 ${receipt.to}，环境变量中为 ${expectedTo}`);
     
     // 验证区块号是否等于height_minus_10
     const currentHeight = parseInt(client.global.get("height_minus_10"), 10);
     const receiptBlockNumber = parseInt(receipt.blockNumber, 10);
-    client.assert(receiptBlockNumber === currentHeight, `区块号与height_minus_10不相等：${receiptBlockNumber} !== ${currentHeight}`);
+    client.assert(receiptBlockNumber == currentHeight, `区块号与height_minus_10不相等：${receiptBlockNumber} !== ${currentHeight}`);
   });
 %}
 
-### 获取多个地址的余额
-GET http://localhost:8080/accounts/balances/{{from_0}},{{to_0}},{{from_1}},{{to_1}}?block={{height_minus_11}}
+### 获取多个地址在height_minus_11的余额并保存到环境变量
+GET http://localhost:8080/accounts/balances/{{from_0}},{{from_1}},{{from_2}}?block={{height_minus_11}}
 
 > {%
   client.test("响应状态码是否为200", function() {
-    client.assert(response.status === 200, "响应状态码不是200");
+    client.assert(response.status == 200, "响应状态码不是200");
     client.assert(response.body.hasOwnProperty('balances'), "响应中缺少balances字段");
     
     const balances = response.body.balances;
     // 验证所有地址的余额
-    const addresses = ["from_0", "to_0", "from_1", "to_1"];
+    const addresses = ["from_0", "from_1", "from_2"];
     addresses.forEach(key => {
       const address = client.global.get(key);
       client.assert(balances.hasOwnProperty(address), `缺少地址 ${address} 的余额`);
       const balance = balances[address];
-      client.assert(typeof balance === "string", `地址 ${address} 的余额不是字符串类型`);
+      client.assert(typeof balance == "string", `地址 ${address} 的余额不是字符串类型`);
       client.assert(balance.length > 0, `地址 ${address} 的余额为空`);
       
       // 保存余额到环境变量
@@ -332,14 +332,136 @@ GET http://localhost:8080/accounts/balances/{{from_0}},{{to_0}},{{from_1}},{{to_
   });
 %}
 
+### 获取多个地址在height_minus_11的单个余额查询
+### 查询from_0的余额
+GET http://localhost:8080/accounts/balance/{{from_0}}?block={{height_minus_11}}
+
+> {%
+  client.test("响应状态码是否为200", function() {
+    client.assert(response.status == 200, "响应状态码不是200");
+    client.assert(response.body.hasOwnProperty('balance'), "响应中缺少balance字段");
+    const balance = response.body.balance;
+    client.assert(typeof balance == "string", "balance 不是一个字符串");
+    client.assert(balance.length > 0, "balance 为空");
+    
+    // 验证余额是否与批量查询的结果相等
+    const expectedBalance = client.global.get("balance_from_0");
+    client.assert(balance == expectedBalance, `余额不匹配：API返回 ${balance}，环境变量 balance_from_0 中为 ${expectedBalance}`);
+  });
+%}
+
+### 查询from_1的余额
+GET http://localhost:8080/accounts/balance/{{from_1}}?block={{height_minus_11}}
+
+> {%
+  client.test("响应状态码是否为200", function() {
+    client.assert(response.status == 200, "响应状态码不是200");
+    client.assert(response.body.hasOwnProperty('balance'), "响应中缺少balance字段");
+    const balance = response.body.balance;
+    client.assert(typeof balance == "string", "balance 不是一个字符串");
+    client.assert(balance.length > 0, "balance 为空");
+    
+    // 验证余额是否与批量查询的结果相等
+    const expectedBalance = client.global.get("balance_from_1");
+    client.assert(balance == expectedBalance, `余额不匹配：API返回 ${balance}，环境变量 balance_from_1 中为 ${expectedBalance}`);
+  });
+%}
+
+### 查询from_2的余额
+GET http://localhost:8080/accounts/balance/{{from_2}}?block={{height_minus_11}}
+
+> {%
+  client.test("响应状态码是否为200", function() {
+    client.assert(response.status == 200, "响应状态码不是200");
+    client.assert(response.body.hasOwnProperty('balance'), "响应中缺少balance字段");
+    const balance = response.body.balance;
+    client.assert(typeof balance == "string", "balance 不是一个字符串");
+    client.assert(balance.length > 0, "balance 为空");
+    
+    // 验证余额是否与批量查询的结果相等
+    const expectedBalance = client.global.get("balance_from_2");
+    client.assert(balance == expectedBalance, `余额不匹配：API返回 ${balance}，环境变量 balance_from_2 中为 ${expectedBalance}`);
+  });
+%}
+
+### 获取多个地址在height_minus_10的余额
+GET http://localhost:8080/accounts/balances/{{from_0}},{{from_1}},{{from_2}}?block={{height_minus_10}}
+
+> {%
+  client.test("响应状态码是否为200", function() {
+    client.assert(response.status == 200, "响应状态码不是200");
+    client.assert(response.body.hasOwnProperty('balances'), "响应中缺少balances字段");
+    
+    const balances = response.body.balances;
+    // 验证所有地址的余额
+    const addresses = ["from_0", "from_1", "from_2"];
+    addresses.forEach(key => {
+      const address = client.global.get(key);
+      client.assert(balances.hasOwnProperty(address), `缺少地址 ${address} 的余额`);
+      const balance = balances[address];
+      client.assert(typeof balance == "string", `地址 ${address} 的余额不是字符串类型`);
+      client.assert(balance.length > 0, `地址 ${address} 的余额为空`);
+    
+      
+      // 验证余额是否发生变化
+      const previousBalance = client.global.get(`balance_${key}`);
+      if (previousBalance) {
+        client.assert(balance !== previousBalance, `地址 ${address} 在height_minus_10的余额与height_minus_11相同：${balance}，环境变量 balance_${key} 中为 ${previousBalance}`);
+        client.log(`地址 ${address} 的余额发生变化：${previousBalance} -> ${balance}`);
+      }
+    });
+  });
+%}
+
+### 查询from_0在height_minus_11的交易数量
+GET http://localhost:8080/accounts/{{from_0}}/transactions/count?number={{height_minus_11}}
+
+> {%
+  client.test("响应状态码是否为200", function() {
+    client.assert(response.status == 200, "响应状态码不是200");
+    client.assert(response.body.hasOwnProperty('count'), "响应中缺少count字段");
+    const count = response.body.count;
+    client.assert(typeof count == "string", "count 不是一个字符串");
+    client.assert(parseInt(count, 10) >= 0, "count 不是一个非负数");
+    
+    // 保存交易数量到环境变量
+    client.global.set("from_0_tx_count", count);
+    client.log(`from_0地址在height_minus_11的交易数量：${count}`);
+  });
+%}
+
+### 验证from_0在height_minus_10的交易数量是否发生变化，预期：count 增加了
+GET http://localhost:8080/accounts/{{from_0}}/transactions/count?number={{height_minus_10}}
+
+> {%
+  client.test("响应状态码是否为200", function() {
+    client.assert(response.status == 200, "响应状态码不是200");
+    client.assert(response.body.hasOwnProperty('count'), "响应中缺少count字段");
+    const count = response.body.count;
+    client.assert(typeof count == "string", "count 不是一个字符串");
+    client.assert(parseInt(count, 10) >= 0, "count 不是一个非负数");
+    
+    // 验证count是否比txCount多
+    const txCount = client.global.get("from_0_tx_count");
+    const currentCount = parseInt(count, 10);
+    const previousCount = parseInt(txCount, 10);
+    
+    // 验证交易数量是否增加
+    client.assert(currentCount > previousCount, `交易数量未增加：当前数量 ${currentCount}，之前数量 ${previousCount}`);
+    
+    // 记录交易数量变化
+    client.log(`交易数量从 ${previousCount} 增加到 ${currentCount}，增加了 ${currentCount - previousCount} 笔交易`);
+  });
+%}
+
 ### 获取最新的 height 并更新到环境变量中
 GET http://localhost:8080/blocks/height/latest
 
 > {%
   client.test("响应状态码是否为200", function() {
-    client.assert(response.status === 200, "响应状态码不是200");
+    client.assert(response.status == 200, "响应状态码不是200");
     const height = response.body.height;
-    client.assert(typeof height === "string", "height 不是一个字符串");
+    client.assert(typeof height == "string", "height 不是一个字符串");
     client.assert(parseInt(height, 10) > 0, "height 不是一个正数");
     
     // 保存最新高度
@@ -353,7 +475,7 @@ GET http://localhost:8080/blocks/transactions/0?number=latest
 
 > {%
   client.test("响应状态码是否为200", function() {
-    client.assert(response.status === 200, "响应状态码不是200");
+    client.assert(response.status == 200, "响应状态码不是200");
     client.assert(response.body.hasOwnProperty('transaction'), "响应中缺少transaction字段");
     
     const tx = response.body.transaction;
@@ -376,7 +498,7 @@ GET http://localhost:8080/blocks/transactions/0?number=latest
     client.assert(heightDiff <= 3, `区块号与当前高度差值过大：${heightDiff}`);
     
     // 验证type为3的交易特有字段
-    if (tx.type === "3") {
+    if (tx.type == "3") {
       client.assert(tx.hasOwnProperty('maxFeePerBlobGas'), "交易缺少maxFeePerBlobGas字段");
       client.assert(tx.hasOwnProperty('blobVersionedHashes'), "交易缺少blobVersionedHashes字段");
       client.assert(Array.isArray(tx.blobVersionedHashes), "blobVersionedHashes不是数组类型");
@@ -394,10 +516,29 @@ GET http://localhost:8080/blocks/latest/transactions/count
 
 > {%
     client.test("响应状态码是否为200", function() {
-        client.assert(response.status === 200, "响应状态码不是200");
-        client.assert(response.body.hasOwnProperty('count'), "响应中缺少count字段");
+        client.assert(response.status == 200, "响应状态码不是200");
         const count = response.body.count;
-        client.assert(typeof count === "string", "count 不是一个字符串");
         client.assert(parseInt(count, 10) >= 0, "count 不是一个非负数");
+        
+        // 保存交易数量到环境变量
+        client.global.set("tx_count", count);
+        client.log(`最新区块交易数量：${count}`);
     });
+%}
+
+### 查询from_0的余额（使用默认高度）
+GET http://localhost:8080/accounts/balance/{{from_0}}
+
+> {%
+  client.test("响应状态码是否为200", function() {
+    client.assert(response.status == 200, "响应状态码不是200");
+    client.assert(response.body.hasOwnProperty('balance'), "响应中缺少balance字段");
+    const balance = response.body.balance;
+    client.assert(typeof balance == "string", "balance 不是一个字符串");
+    client.assert(balance.length > 0, "balance 为空");
+    
+    // 验证余额是否与height_minus_11区块高度的余额不相等
+    const oldBalance = client.global.get("balance_from_0");
+    client.assert(balance !== oldBalance, `余额相等：当前余额 ${balance} 与区块高度 height_minus_11 的余额（环境变量 balance_from_0 中为 ${oldBalance}）相同`);
+  });
 %}

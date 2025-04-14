@@ -31,3 +31,4 @@ go.work.sum
 .lingma/
 .clinerules
 .DS_Store
+.httprules

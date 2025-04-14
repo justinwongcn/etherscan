@@ -178,15 +178,19 @@ func (h *TransactionHandler) GetTransactionCount(c *gin.Context) {
 		return
 	}
 
-	// 从查询参数中获取区块号或哈希
-	blockParam := c.Param("number")
-	// 如果参数为空，则使用latest
-	if blockParam == "" {
-		blockParam = ethereum.BlockLatest
+	blockParam := c.DefaultQuery("number", ethereum.BlockLatest)
+
+	// 解析并标准化区块参数格式
+	parsedBlockParam, err := ethereum.ParseBlockParameter(blockParam)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
 	}
 
 	// 获取交易数量
-	count, err := h.transactionService.GetTransactionCount(c.Request.Context(), address, blockParam)
+	count, err := h.transactionService.GetTransactionCount(c.Request.Context(), address, parsedBlockParam)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
