@@ -1,0 +1,155 @@
+# .clinerules - Go Development Standards
+
+This document establishes Go development best practices following Cline's standard template while incorporating specialized Go language rules.
+
+## Key Benefits of These Standards
+
+- **Performance Optimization**: Built-in guidance for goroutine management and memory efficiency
+- **Safety Guarantees**: Strict concurrency and error handling patterns prevent common pitfalls
+- **Team Consistency**: Enforces uniform Go coding patterns across all contributors
+- **Built-in Quality Control**: Integrated testing and static analysis requirements
+
+## Standard Implementation Framework
+
+### Module Management
+```go
+// go.mod example with mandatory requirements
+module github.com/yourorg/project
+
+go 1.21 // Minimum version requirement
+
+require (
+    github.com/pkg/errors v0.9.1 // Standard error wrapping
+)
+```
+
+### Project Structure
+```
+/cmd         // Main application entry points
+/internal    // Private implementation code
+/pkg         // Public reusable components  
+/api         // Protocol definitions
+/test        // Integration test suites
+```
+
+## Critical Implementation Standards
+
+### Concurrency Safety
+```go
+// Goroutine template with proper lifecycle management
+func worker(ctx context.Context, jobs <-chan Job) {
+    for {
+        select {
+        case job := <-jobs: 
+            process(job)
+        case <-ctx.Done():
+            recoverResources() // Mandatory cleanup
+            return
+        }
+    }
+}
+```
+
+### Error Handling Protocol
+1. **Wrapping Errors**:
+   ```go
+   if err := operation(); err != nil {
+       return fmt.Errorf("context: %w", err)
+   }
+   ```
+2. **Fatal Errors** must implement stack traces:
+   ```go
+   import "github.com/pkg/errors"
+   
+   func criticalOperation() error {
+       return errors.New("failure").WithStack()
+   }
+   ```
+
+## Quality Enforcement
+
+### Testing Requirements
+- **Unit Tests**:
+  ```go
+  func TestCompute(t *testing.T) {
+      tests := []struct{
+          input    int
+          expected int
+      }{
+          {1, 2},
+          {0, 1}, 
+      }
+      
+      for _, tc := range tests {
+          t.Run(fmt.Sprint(tc.input), func(t *testing.T) {
+              if got := Compute(tc.input); got != tc.expected {
+                  t.Errorf("Compute(%d) = %d; want %d", 
+                          tc.input, got, tc.expected)
+              }
+          })
+      }
+  }
+  ```
+  
+- **Benchmarks** must include:
+  ```go
+  func BenchmarkProcess(b *testing.B) {
+      data := loadTestData() 
+      b.ResetTimer()
+      b.RunParallel(func(pb *testing.PB) {
+          for pb.Next() {
+              Process(data)
+          }
+      })
+  }
+  ```
+
+### Static Analysis
+- Required linters:
+  ```bash
+  golangci-lint run -E=goimports,unparam,gocritic
+  ```
+- Zero tolerance for:
+  - Race conditions
+  - Unhandled errors
+  - Resource leaks
+
+## Security Protocols
+
+### Secure Development
+1. **Authentication**:
+   ```go
+   import "golang.org/x/crypto/bcrypt"
+   
+   func HashPassword(pwd string) (string, error) {
+       bytes, err := bcrypt.GenerateFromPassword([]byte(pwd), 14)
+       return string(bytes), err
+   }
+   ```
+   
+2. **Secrets Management**:
+   - Never commit `.env` or `*.secret` files
+   - Use environment variables for production credentials
+   - Encrypt sensitive configuration
+
+## Compliance Metrics
+
+| Standard               | Target            | Verification Method         |
+|------------------------|-------------------|-----------------------------|
+| Test Coverage          | ≥ 85%             | go test -cover              |
+| Race Condition Free    | 100%              | go test -race               |
+| Build Warnings         | 0                 | golangci-lint run           |
+| Memory Leaks           | 0                 | pprof heap analysis         |
+
+## Critical Incident Response
+
+Immediately escalate when detecting:
+1. Goroutine leaks (> 5% growth/hour)
+2. Memory usage spikes (> 150% baseline)
+3. Core functionality test regression (> 5% coverage drop)
+
+Use `pprof` and `trace` for emergency diagnostics:
+```bash
+go tool pprof -http=:8080 heap.pprof
+go tool trace trace.out
+```

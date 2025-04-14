@@ -28,7 +28,4 @@ go.work.sum
 .idea/
 .vscode/
 .roomodes
-.lingma/
-.clinerules
 .DS_Store
-.httprules
