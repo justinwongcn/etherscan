@@ -1,10 +1,11 @@
 module github.com/justinwongcn/etherscan
 
-go 1.24
+go 1.24.0
 
 require (
 	github.com/ethereum/go-ethereum v1.15.5
 	github.com/gin-gonic/gin v1.10.0
+	github.com/justinwongcn/ant v0.0.2
 	github.com/justinwongcn/go-ethlibs v0.0.5
 	github.com/stretchr/testify v1.10.0
 	golang.org/x/sync v0.12.0
@@ -32,6 +33,7 @@ require (
 	github.com/goccy/go-json v0.10.4 // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
+	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/holiman/uint256 v1.3.2 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
