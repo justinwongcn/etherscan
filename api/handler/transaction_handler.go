@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/gin-gonic/gin"
+	"github.com/justinwongcn/ant"
 	"github.com/justinwongcn/etherscan/application/service"
 	"github.com/justinwongcn/etherscan/internal/ethereum"
 )
@@ -40,27 +40,27 @@ func NewTransactionHandler(transactionService service.TransactionServiceInterfac
 //
 // 错误码:
 //   - 500: 服务器内部错误（包括参数格式错误）
-func (h *TransactionHandler) GetTransactionByHash(c *gin.Context) {
+func (h *TransactionHandler) GetTransactionByHash(ctx *ant.Context) {
 	// 获取交易哈希参数
-	txHash := c.Param("hash")
+	txHash := ctx.Req.PathValue("hash")
 	if txHash == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		_ = ctx.RespJSON(http.StatusInternalServerError, H{
 			"error": "transaction hash is required",
 		})
 		return
 	}
 
 	// 获取交易信息
-	tx, err := h.transactionService.GetTransactionByHash(c.Request.Context(), txHash)
+	tx, err := h.transactionService.GetTransactionByHash(ctx.Req.Context(), txHash)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		_ = ctx.RespJSON(http.StatusInternalServerError, H{
 			"error": err.Error(),
 		})
 		return
 	}
 
 	// 返回交易信息
-	c.JSON(http.StatusOK, gin.H{
+	_ = ctx.RespJSONOK(H{
 		"transaction": tx,
 	})
 }
@@ -80,45 +80,55 @@ func (h *TransactionHandler) GetTransactionByHash(c *gin.Context) {
 //
 // 错误码:
 //   - 500: 服务器内部错误（包括参数格式错误）
-func (h *TransactionHandler) GetTransactionByIndex(c *gin.Context) {
-	// 从查询参数中获取区块号或哈希
-	blockParam := c.Query("number")
+func (h *TransactionHandler) GetTransactionByIndex(ctx *ant.Context) {
+	// 获取路径参数
+	indexStr := ctx.Req.PathValue("index")
+
+	// 获取查询参数
+	blockParam, err := ctx.QueryValue("number").String()
+	if err != nil {
+		_ = ctx.RespJSON(http.StatusInternalServerError, H{
+			"error": "invalid block number or hash",
+		})
+		return
+	}
+
 	// 如果参数为空，则返回错误信息
 	if blockParam == "" {
-		c.JSON(http.StatusBadRequest, gin.H{
+		_ = ctx.RespJSON(http.StatusBadRequest, H{
 			"error": "block number or hash is required",
 		})
 		return
 	}
 
 	// 获取交易索引参数并转换为uint64
-	indexStr := c.Param("index")
+	indexStr = ctx.Req.PathValue("index")
 	index, err := strconv.ParseUint(indexStr, 10, 64)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		_ = ctx.RespJSON(http.StatusInternalServerError, H{
 			"error": "invalid transaction index",
 		})
 		return
 	}
 
 	// 获取交易信息
-	tx, err := h.transactionService.GetTransactionByIndex(c.Request.Context(), blockParam, index)
+	tx, err := h.transactionService.GetTransactionByIndex(ctx.Req.Context(), blockParam, index)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		_ = ctx.RespJSON(http.StatusInternalServerError, H{
 			"error": err.Error(),
 		})
 		return
 	}
 
 	// 返回交易信息
-	c.JSON(http.StatusOK, gin.H{
+	_ = ctx.RespJSONOK(H{
 		"transaction": tx,
 	})
 }
 
 // SendRawTransactionRequest 定义了发送已签名交易的请求结构
 type SendRawTransactionRequest struct {
-	SignedTxData string `json:"signedTxData" binding:"required"`
+	SignedTxData string `json:"signedTxData"`
 }
 
 // SendRawTransaction 处理发送已签名交易的HTTP请求
@@ -133,24 +143,30 @@ type SendRawTransactionRequest struct {
 // 错误码:
 //   - 400: 请求体格式错误或参数无效
 //   - 500: 服务器内部错误
-func (h *TransactionHandler) SendRawTransaction(c *gin.Context) {
+func (h *TransactionHandler) SendRawTransaction(ctx *ant.Context) {
 	var req SendRawTransactionRequest
 
-	// 绑定并验证请求体
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body: " + err.Error()})
+	// 解析请求体
+	if err := ctx.BindJSON(&req); err != nil {
+		_ = ctx.RespJSON(http.StatusBadRequest, H{
+			"error": "Invalid request body: " + err.Error(),
+		})
 		return
 	}
 
 	// 调用服务层发送交易
-	txHash, err := h.transactionService.SendRawTransaction(c.Request.Context(), req.SignedTxData)
+	txHash, err := h.transactionService.SendRawTransaction(ctx.Req.Context(), req.SignedTxData)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		_ = ctx.RespJSON(http.StatusInternalServerError, H{
+			"error": err.Error(),
+		})
 		return
 	}
 
 	// 返回交易哈希
-	c.JSON(http.StatusOK, gin.H{"txHash": txHash})
+	_ = ctx.RespJSONOK(H{
+		"txHash": txHash,
+	})
 }
 
 // GetTransactionCount 处理获取账户交易数量的HTTP请求
@@ -168,38 +184,41 @@ func (h *TransactionHandler) SendRawTransaction(c *gin.Context) {
 //
 // 错误码:
 //   - 500: 服务器内部错误（包括参数格式错误）
-func (h *TransactionHandler) GetTransactionCount(c *gin.Context) {
+func (h *TransactionHandler) GetTransactionCount(ctx *ant.Context) {
 	// 获取地址参数
-	address := c.Param("address")
+	address := ctx.Req.PathValue("address")
 	if address == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		_ = ctx.RespJSON(http.StatusInternalServerError, H{
 			"error": "address is required",
 		})
 		return
 	}
 
-	blockParam := c.DefaultQuery("number", ethereum.BlockLatest)
+	blockParam, err := ctx.QueryValue("number").String()
+	if err != nil || blockParam == "" {
+		blockParam = ethereum.BlockLatest
+	}
 
 	// 解析并标准化区块参数格式
 	parsedBlockParam, err := ethereum.ParseBlockParameter(blockParam)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		_ = ctx.RespJSON(http.StatusInternalServerError, H{
 			"error": err.Error(),
 		})
 		return
 	}
 
 	// 获取交易数量
-	count, err := h.transactionService.GetTransactionCount(c.Request.Context(), address, parsedBlockParam)
+	count, err := h.transactionService.GetTransactionCount(ctx.Req.Context(), address, parsedBlockParam)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		_ = ctx.RespJSON(http.StatusInternalServerError, H{
 			"error": err.Error(),
 		})
 		return
 	}
 
 	// 返回交易数量
-	c.JSON(http.StatusOK, gin.H{
+	_ = ctx.RespJSONOK(H{
 		"count": count,
 	})
 }
@@ -215,27 +234,27 @@ func (h *TransactionHandler) GetTransactionCount(c *gin.Context) {
 //
 // 错误码:
 //   - 500: 服务器内部错误（包括参数格式错误）
-func (h *TransactionHandler) GetTransactionReceipt(c *gin.Context) {
+func (h *TransactionHandler) GetTransactionReceipt(ctx *ant.Context) {
 	// 获取交易哈希参数
-	txHash := c.Param("hash")
+	txHash := ctx.Req.PathValue("hash")
 	if txHash == "" {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		_ = ctx.RespJSON(http.StatusInternalServerError, H{
 			"error": "transaction hash is required",
 		})
 		return
 	}
 
 	// 获取交易收据信息
-	receipt, err := h.transactionService.GetTransactionReceipt(c.Request.Context(), txHash)
+	receipt, err := h.transactionService.GetTransactionReceipt(ctx.Req.Context(), txHash)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		_ = ctx.RespJSON(http.StatusInternalServerError, H{
 			"error": err.Error(),
 		})
 		return
 	}
 
 	// 返回交易收据信息
-	c.JSON(http.StatusOK, gin.H{
+	_ = ctx.RespJSONOK(H{
 		"receipt": receipt,
 	})
 }

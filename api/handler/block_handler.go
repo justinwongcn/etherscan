@@ -4,12 +4,15 @@ package handler
 import (
 	"net/http"
 
-	"github.com/gin-gonic/gin"
+	"github.com/justinwongcn/ant"
 	"github.com/justinwongcn/etherscan/application/service"
 )
 
 // BlockHandler 区块处理器，负责处理与以太坊区块相关的HTTP请求
-// 该处理器实现了RESTful风格的API接口，提供区块高度、区块信息和交易数量的查询功能
+// 该处理器实现了以下API接口：
+//   - GET /blocks/height/latest: 获取最新区块高度
+//   - GET /blocks/:number: 获取指定区块的详细信息
+//   - GET /blocks/:number/transactions/count: 获取指定区块的交易数量
 type BlockHandler struct {
 	// blockService 是区块服务接口的实现，用于处理具体的业务逻辑
 	blockService service.BlockServiceInterface
@@ -27,26 +30,25 @@ func NewBlockHandler(blockService service.BlockServiceInterface) *BlockHandler {
 	}
 }
 
-// GetBlockHeight 处理获取最新区块高度的HTTP请求
-// 请求路径: GET /blocks/latest/height
+// GetLatestBlockHeight 处理获取最新区块高度的HTTP请求
 // 响应格式:
 //   - 成功: {"height": <区块高度>}
 //   - 失败: {"error": <错误信息>}
 //
 // 错误码:
 //   - 500: 服务器内部错误
-func (h *BlockHandler) GetBlockHeight(c *gin.Context) {
+func (h *BlockHandler) GetLatestBlockHeight(ctx *ant.Context) {
 	// 获取最新区块高度
-	height, err := h.blockService.GetLatestBlockHeight(c.Request.Context())
+	height, err := h.blockService.GetLatestBlockHeight(ctx.Req.Context())
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		_ = ctx.RespJSON(http.StatusInternalServerError, H{
 			"error": err.Error(),
 		})
 		return
 	}
 
 	// 返回区块高度
-	c.JSON(http.StatusOK, gin.H{
+	_ = ctx.RespJSONOK(H{
 		"height": height,
 	})
 }
@@ -66,27 +68,28 @@ func (h *BlockHandler) GetBlockHeight(c *gin.Context) {
 //
 // 错误码:
 //   - 500: 服务器内部错误（包括参数格式错误）
-func (h *BlockHandler) GetBlock(c *gin.Context) {
+func (h *BlockHandler) GetBlock(ctx *ant.Context) {
 	// 从URL路径中获取区块号或哈希
-	blockParam := c.Param("number")
+	blockParam := ctx.Req.PathValue("number")
 
 	// 获取fullTx查询参数，默认为true
 	fullTx := true
-	if fullTxStr := c.Query("fullTx"); fullTxStr == "false" {
+	fullTxVal := ctx.QueryValue("fullTx")
+	if fullTxStr, err := fullTxVal.String(); err == nil && fullTxStr == "false" {
 		fullTx = false
 	}
 
 	// 获取区块信息
-	block, err := h.blockService.GetBlock(c.Request.Context(), blockParam, fullTx)
+	block, err := h.blockService.GetBlock(ctx.Req.Context(), blockParam, fullTx)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		_ = ctx.RespJSON(http.StatusInternalServerError, H{
 			"error": err.Error(),
 		})
 		return
 	}
 
 	// 返回区块信息
-	c.JSON(http.StatusOK, gin.H{
+	_ = ctx.RespJSONOK(H{
 		"block": block,
 	})
 }
@@ -103,21 +106,21 @@ func (h *BlockHandler) GetBlock(c *gin.Context) {
 //
 // 错误码:
 //   - 500: 服务器内部错误（包括参数格式错误）
-func (h *BlockHandler) GetBlockTransactionCount(c *gin.Context) {
+func (h *BlockHandler) GetBlockTransactionCount(ctx *ant.Context) {
 	// 从URL路径中获取区块号或哈希
-	blockParam := c.Param("number")
+	blockParam := ctx.Req.PathValue("number")
 
 	// 获取交易数量
-	count, err := h.blockService.GetBlockTransactionCount(c.Request.Context(), blockParam)
+	count, err := h.blockService.GetBlockTransactionCount(ctx.Req.Context(), blockParam)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
+		_ = ctx.RespJSON(http.StatusInternalServerError, H{
 			"error": err.Error(),
 		})
 		return
 	}
 
 	// 返回交易数量
-	c.JSON(http.StatusOK, gin.H{
+	_ = ctx.RespJSONOK(H{
 		"count": count,
 	})
 }

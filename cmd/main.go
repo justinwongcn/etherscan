@@ -4,7 +4,7 @@ import (
 	"context"
 	"log"
 
-	"github.com/gin-gonic/gin"
+	"github.com/justinwongcn/ant"
 	"github.com/justinwongcn/etherscan/api/handler"
 	"github.com/justinwongcn/etherscan/api/routes"
 	"github.com/justinwongcn/etherscan/application/service"
@@ -19,24 +19,25 @@ func main() {
 		log.Fatalf("Failed to create ethereum client: %v", err)
 	}
 
-	// 初始化服务层
+	// 初始化 service
 	blockService := service.NewBlockService(client)
-	transactionService := service.NewTransactionService(client)
+	trancactionService := service.NewTransactionService(client)
 	accountService := service.NewAccountService(client)
 
-	// 初始化处理器
+	// 初始化 handler
 	blockHandler := handler.NewBlockHandler(blockService)
-	transactionHandler := handler.NewTransactionHandler(transactionService)
+	trancactionHandler := handler.NewTransactionHandler(trancactionService)
 	accountHandler := handler.NewAccountHandler(accountService)
 
-	// 设置Gin路由
-	r := gin.Default()
+	// 创建一个新的 HTTP 服务器
+	server := ant.NewHTTPServer()
 
 	// 注册路由
-	routes.RegisterRoutes(r, blockHandler, transactionHandler, accountHandler)
+	routes.RegisterRoutes(server, blockHandler, trancactionHandler, accountHandler)
 
 	// 启动服务器
-	if err := r.Run(":8080"); err != nil {
+	log.Println("Server is running on :8080")
+	if err := server.Run(":8080"); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }
