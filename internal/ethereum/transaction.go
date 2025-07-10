@@ -120,7 +120,7 @@ func (c *Client) SendRawTransaction(ctx context.Context, signedTxData string) (s
 func (c *Client) GetTransactionByBlockHashAndIndex(ctx context.Context, blockHash string, index uint64) (*eth.Transaction, error) {
 	// 验证区块哈希格式
 	if len(blockHash) < 2 || blockHash[:2] != "0x" {
-		return nil, fmt.Errorf("invalid block hash format: must be hex string starting with 0x")
+		return nil, fmt.Errorf(ErrInvalidBlockHashFormat)
 	}
 
 	// 使用通用的连接池辅助函数执行操作

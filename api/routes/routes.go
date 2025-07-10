@@ -25,7 +25,7 @@ func RegisterRoutes(server *ant.HTTPServer, blockHandler *handler.BlockHandler, 
 
 	// 交易相关路由
 	server.Handle("GET /transactions/{hash}", transactionHandler.GetTransactionByHash)
-	server.Handle("GET /blocks/transactions/{index}", transactionHandler.GetTransactionByIndex) // 修改为查询参数方式
+	server.Handle("GET /blocks/transactions/{index}", transactionHandler.GetTransactionByIndex)
 	server.Handle("POST /transactions", transactionHandler.SendRawTransaction)
 	server.Handle("GET /accounts/{address}/transactions/count", transactionHandler.GetTransactionCount)
 	server.Handle("GET /transactions/{hash}/receipt", transactionHandler.GetTransactionReceipt)

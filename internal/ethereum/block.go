@@ -97,7 +97,7 @@ func (c *Client) GetBlockTransactionCountByNumber(ctx context.Context, numberOrT
 func (c *Client) GetBlockByHash(ctx context.Context, blockHash string, fullTx bool) (*eth.Block, error) {
 	// 验证区块哈希格式
 	if len(blockHash) < 2 || blockHash[:2] != "0x" {
-		return nil, fmt.Errorf("invalid block hash format: must be hex string starting with 0x")
+		return nil, fmt.Errorf(ErrInvalidBlockHashFormat)
 	}
 
 	// 使用通用的连接池辅助函数执行操作
@@ -161,7 +161,7 @@ func (c *Client) GetBlockByNumber(ctx context.Context, numberOrTag string, fullT
 func (c *Client) GetUncleByBlockHashAndIndex(ctx context.Context, blockHash string, index uint64) (*eth.Block, error) {
 	// 验证区块哈希格式
 	if len(blockHash) < 2 || blockHash[:2] != "0x" {
-		return nil, fmt.Errorf("invalid block hash format: must be hex string starting with 0x")
+		return nil, fmt.Errorf(ErrInvalidBlockHashFormat)
 	}
 
 	// 使用通用的连接池辅助函数执行操作

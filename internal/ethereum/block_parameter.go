@@ -39,7 +39,7 @@ func ParseBlockParameter(blockHashOrNumber string) (string, error) {
 	// 尝试将输入解析为区块号
 	blockNum := new(big.Int)
 	if _, ok := blockNum.SetString(blockHashOrNumber, 10); !ok {
-		return "", fmt.Errorf("invalid block parameter: %s", blockHashOrNumber)
+		return "", fmt.Errorf(ErrInvalidBlockParameter, blockHashOrNumber)
 	}
 
 	// 将区块号转换为十六进制格式

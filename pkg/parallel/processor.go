@@ -20,13 +20,13 @@ type Converter[T any, R any] func(T) R
 //   - items: 输入数据切片，支持任意类型T的数据集合
 //   - conv: 类型转换函数，定义了将输入类型T转换为输出类型R的转换规则
 //   - threshold: 并发处理阈值，用于动态决定处理策略：
-//     * 当 len(items) < threshold 时使用顺序处理
-//     * 当 len(items) >= threshold 时使用并发处理
+//   - 当 len(items) < threshold 时使用顺序处理
+//   - 当 len(items) >= threshold 时使用并发处理
 //
 // 返回值:
 //   - []R: 返回经过转换处理后的结果切片，其长度与输入切片相同
-//     * 如果输入切片为nil，则返回nil
-//     * 返回的切片中元素顺序与输入切片保持一致
+//   - 如果输入切片为nil，则返回nil
+//   - 返回的切片中元素顺序与输入切片保持一致
 func Process[T any, R any](items []T, conv Converter[T, R], threshold int) []R {
 	// 空值检查，避免对nil切片进行处理
 	if items == nil {
