@@ -13,8 +13,9 @@ import (
 // TransactionHandler 交易处理器，负责处理与以太坊交易相关的HTTP请求
 // 该处理器实现了RESTful风格的API接口，提供交易查询和发送功能
 type TransactionHandler struct {
-	// transactionService 是交易服务接口的实现，用于处理具体的业务逻辑
-	transactionService service.TransactionServiceInterface
+	*BaseHandler
+	// transactionService 是交易服务的实现，用于处理具体的业务逻辑
+	transactionService *service.TransactionService
 }
 
 // NewTransactionHandler 创建并初始化一个新的交易处理器实例
@@ -23,23 +24,22 @@ type TransactionHandler struct {
 //
 // 返回:
 //   - *TransactionHandler: 初始化完成的处理器实例
-func NewTransactionHandler(transactionService service.TransactionServiceInterface) *TransactionHandler {
+func NewTransactionHandler(transactionService *service.TransactionService) *TransactionHandler {
 	return &TransactionHandler{
+		BaseHandler:        NewBaseHandler(),
 		transactionService: transactionService,
 	}
 }
 
-// GetTransactionByHash 处理获取交易信息的HTTP请求
-// 请求路径: GET /transactions/:hash
+// GetTransactionByHash 处理获取交易信息的HTTP请求（使用新的DDD架构）
+// 这是一个演示方法，展示如何使用新的DDD架构
+// 请求路径: GET /transactions/:hash/ddd
 // 路径参数:
 //   - hash: 交易哈希（32字节的十六进制字符串）
 //
 // 响应格式:
-//   - 成功: {"transaction": <交易信息对象>}
+//   - 成功: {"transaction": <交易信息对象>, "architecture": "DDD"}
 //   - 失败: {"error": <错误信息>}
-//
-// 错误码:
-//   - 500: 服务器内部错误（包括参数格式错误）
 func (h *TransactionHandler) GetTransactionByHash(ctx *ant.Context) {
 	// 获取交易哈希参数
 	txHash := ctx.Req.PathValue("hash")
@@ -50,18 +50,19 @@ func (h *TransactionHandler) GetTransactionByHash(ctx *ant.Context) {
 		return
 	}
 
-	// 获取交易信息
-	tx, err := h.transactionService.GetTransactionByHash(ctx.Req.Context(), txHash)
+	// 调用服务层方法
+	ethTx, err := h.transactionService.GetTransactionByHash(ctx.Req.Context(), txHash)
 	if err != nil {
-		_ = ctx.RespJSON(http.StatusInternalServerError, H{
-			"error": err.Error(),
-		})
+		h.RespondWithInternalError(ctx, err)
 		return
 	}
 
-	// 返回交易信息
-	_ = ctx.RespJSONOK(H{
-		"transaction": tx,
+	// 转换为API响应格式，确保数值字段是十进制
+	transaction := h.ConvertTransactionToResponse(ethTx)
+
+	// 返回交易信息，保持与原有格式完全一致
+	h.RespondWithSuccess(ctx, H{
+		"transaction": transaction,
 	})
 }
 
@@ -81,9 +82,6 @@ func (h *TransactionHandler) GetTransactionByHash(ctx *ant.Context) {
 // 错误码:
 //   - 500: 服务器内部错误（包括参数格式错误）
 func (h *TransactionHandler) GetTransactionByIndex(ctx *ant.Context) {
-	// 获取路径参数
-	indexStr := ctx.Req.PathValue("index")
-
 	// 获取查询参数
 	blockParam, err := ctx.QueryValue("number").String()
 	if err != nil {
@@ -102,7 +100,7 @@ func (h *TransactionHandler) GetTransactionByIndex(ctx *ant.Context) {
 	}
 
 	// 获取交易索引参数并转换为uint64
-	indexStr = ctx.Req.PathValue("index")
+	indexStr := ctx.Req.PathValue("index")
 	index, err := strconv.ParseUint(indexStr, 10, 64)
 	if err != nil {
 		_ = ctx.RespJSON(http.StatusInternalServerError, H{
@@ -111,18 +109,19 @@ func (h *TransactionHandler) GetTransactionByIndex(ctx *ant.Context) {
 		return
 	}
 
-	// 获取交易信息
-	tx, err := h.transactionService.GetTransactionByIndex(ctx.Req.Context(), blockParam, index)
+	// 调用服务层方法
+	ethTx, err := h.transactionService.GetTransactionByIndex(ctx.Req.Context(), blockParam, index)
 	if err != nil {
-		_ = ctx.RespJSON(http.StatusInternalServerError, H{
-			"error": err.Error(),
-		})
+		h.RespondWithInternalError(ctx, err)
 		return
 	}
 
+	// 转换为API响应格式，确保数值字段是十进制
+	transaction := h.ConvertTransactionToResponse(ethTx)
+
 	// 返回交易信息
-	_ = ctx.RespJSONOK(H{
-		"transaction": tx,
+	h.RespondWithSuccess(ctx, H{
+		"transaction": transaction,
 	})
 }
 
@@ -154,17 +153,15 @@ func (h *TransactionHandler) SendRawTransaction(ctx *ant.Context) {
 		return
 	}
 
-	// 调用服务层发送交易
+	// 调用服务层方法
 	txHash, err := h.transactionService.SendRawTransaction(ctx.Req.Context(), req.SignedTxData)
 	if err != nil {
-		_ = ctx.RespJSON(http.StatusInternalServerError, H{
-			"error": err.Error(),
-		})
+		h.RespondWithInternalError(ctx, err)
 		return
 	}
 
 	// 返回交易哈希
-	_ = ctx.RespJSONOK(H{
+	h.RespondWithSuccess(ctx, H{
 		"txHash": txHash,
 	})
 }
@@ -208,17 +205,15 @@ func (h *TransactionHandler) GetTransactionCount(ctx *ant.Context) {
 		return
 	}
 
-	// 获取交易数量
+	// 调用服务层方法
 	count, err := h.transactionService.GetTransactionCount(ctx.Req.Context(), address, parsedBlockParam)
 	if err != nil {
-		_ = ctx.RespJSON(http.StatusInternalServerError, H{
-			"error": err.Error(),
-		})
+		h.RespondWithInternalError(ctx, err)
 		return
 	}
 
 	// 返回交易数量
-	_ = ctx.RespJSONOK(H{
+	h.RespondWithSuccess(ctx, H{
 		"count": count,
 	})
 }
@@ -244,17 +239,18 @@ func (h *TransactionHandler) GetTransactionReceipt(ctx *ant.Context) {
 		return
 	}
 
-	// 获取交易收据信息
-	receipt, err := h.transactionService.GetTransactionReceipt(ctx.Req.Context(), txHash)
+	// 调用服务层方法
+	ethReceipt, err := h.transactionService.GetTransactionReceipt(ctx.Req.Context(), txHash)
 	if err != nil {
-		_ = ctx.RespJSON(http.StatusInternalServerError, H{
-			"error": err.Error(),
-		})
+		h.RespondWithInternalError(ctx, err)
 		return
 	}
 
+	// 转换为API响应格式，确保数值字段是十进制
+	receipt := h.ConvertTransactionReceiptToResponse(ethReceipt)
+
 	// 返回交易收据信息
-	_ = ctx.RespJSONOK(H{
+	h.RespondWithSuccess(ctx, H{
 		"receipt": receipt,
 	})
 }

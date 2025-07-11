@@ -37,7 +37,7 @@ func (c *Client) GetBalance(ctx context.Context, address string, numberOrTag str
 	// 处理默认值并验证区块号格式
 	parsedBlock, err := ParseBlockParameter(numberOrTag)
 	if err != nil {
-		return 0, fmt.Errorf("invalid block parameter: %v", err)
+		return 0, fmt.Errorf(ErrInvalidBlockParameter, err)
 	}
 
 	numOrTag := eth.MustBlockNumberOrTag(parsedBlock)
@@ -94,7 +94,7 @@ func (c *Client) GetBalances(ctx context.Context, addresses []string, numberOrTa
 	// 验证并转换区块号格式
 	parsedBlock, err := ParseBlockParameter(numberOrTag)
 	if err != nil {
-		return nil, fmt.Errorf("invalid block parameter: %v", err)
+		return nil, fmt.Errorf(ErrInvalidBlockParameter, err)
 	}
 
 	// 创建结果映射
@@ -175,7 +175,7 @@ func (c *Client) GetCode(ctx context.Context, address string, numberOrTag string
 	// 处理默认值并验证区块号格式
 	parsedBlock, err := ParseBlockParameter(numberOrTag)
 	if err != nil {
-		return "", fmt.Errorf("invalid block parameter: %v", err)
+		return "", fmt.Errorf(ErrInvalidBlockParameter, err)
 	}
 
 	numOrTag := eth.MustBlockNumberOrTag(parsedBlock)

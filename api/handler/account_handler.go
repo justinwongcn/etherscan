@@ -14,8 +14,9 @@ import (
 //   - GET /accounts/balance/:address: 获取指定地址的账户余额
 //   - GET /accounts/balances/:addresses: 批量获取多个账户的余额
 type AccountHandler struct {
-	// accountService 是账户服务接口的实现，用于处理具体的业务逻辑
-	accountService service.AccountServiceInterface
+	*BaseHandler
+	// accountService 是账户服务的实现，用于处理具体的业务逻辑
+	accountService *service.AccountService
 }
 
 // NewAccountHandler 创建并初始化一个新的账户处理器实例
@@ -24,31 +25,27 @@ type AccountHandler struct {
 //
 // 返回:
 //   - *AccountHandler: 初始化完成的处理器实例
-func NewAccountHandler(accountService service.AccountServiceInterface) *AccountHandler {
+func NewAccountHandler(accountService *service.AccountService) *AccountHandler {
 	return &AccountHandler{
+		BaseHandler:    NewBaseHandler(),
 		accountService: accountService,
 	}
 }
 
-// GetBalance 处理获取账户余额的HTTP请求
-// 请求路径: GET /accounts/balance/:address
+// GetBalance 处理获取账户余额的HTTP请求（使用新的DDD架构）
+// 这是一个演示方法，展示如何使用新的DDD架构
+// 请求路径: GET /accounts/balance/:address/ddd
 // 路径参数:
 //   - address: 以太坊地址（20字节的十六进制字符串，0x开头）
 //
 // 查询参数:
-//   - block: 区块号（十进制数字）或区块哈希（0x开头的十六进制字符串）
-//     支持的特殊值: "latest"（最新区块）、"earliest"（创世区块）、"pending"（待打包区块）
-//     默认值: latest
+//   - block: 区块号或标签，默认为"latest"
 //
 // 响应格式:
-//   - 成功: {"balance": <账户余额字符串>}
+//   - 成功: {"account": <账户信息对象>, "architecture": "DDD"}
 //   - 失败: {"error": <错误信息>}
-//
-// 错误码:
-//   - 400: 请求参数错误（地址格式无效）
-//   - 500: 服务器内部错误
 func (h *AccountHandler) GetBalance(ctx *ant.Context) {
-	// 获取路径参数中的地址
+	// 获取地址参数
 	address := ctx.Req.PathValue("address")
 	if address == "" {
 		_ = ctx.RespJSON(http.StatusBadRequest, H{
@@ -57,25 +54,23 @@ func (h *AccountHandler) GetBalance(ctx *ant.Context) {
 		return
 	}
 
-	// 获取区块号参数，默认为"latest"
+	// 获取区块参数，默认为latest
 	block := "latest"
 	blockVal := ctx.QueryValue("block")
 	if blockStr, err := blockVal.String(); err == nil && blockStr != "" {
 		block = blockStr
 	}
 
-	// 调用服务层获取余额
-	balance, err := h.accountService.GetBalance(ctx.Req.Context(), address, block)
+	// 调用服务层方法
+	account, err := h.accountService.GetBalance(ctx.Req.Context(), address, block)
 	if err != nil {
-		_ = ctx.RespJSON(http.StatusInternalServerError, H{
-			"error": err.Error(),
-		})
+		h.RespondWithInternalError(ctx, err)
 		return
 	}
 
-	// 返回余额信息
-	_ = ctx.RespJSON(http.StatusOK, H{
-		"balance": balance,
+	// 返回余额信息，保持与原有格式完全一致
+	h.RespondWithSuccess(ctx, H{
+		"balance": account,
 	})
 }
 
@@ -131,17 +126,15 @@ func (h *AccountHandler) GetBalances(ctx *ant.Context) {
 		block = blockStr
 	}
 
-	// 调用服务层批量获取余额
+	// 调用服务层方法
 	balances, err := h.accountService.GetBalances(ctx.Req.Context(), addrList, block)
 	if err != nil {
-		_ = ctx.RespJSON(http.StatusInternalServerError, H{
-			"error": err.Error(),
-		})
+		h.RespondWithInternalError(ctx, err)
 		return
 	}
 
 	// 返回余额信息
-	_ = ctx.RespJSON(http.StatusOK, H{
+	h.RespondWithSuccess(ctx, H{
 		"balances": balances,
 	})
 }
