@@ -1,13 +1,15 @@
 module github.com/justinwongcn/etherscan
 
-go 1.24.0
+go 1.24.3
+
+toolchain go1.24.5
 
 require (
 	github.com/ethereum/go-ethereum v1.15.5
 	github.com/justinwongcn/ant v0.0.2
 	github.com/justinwongcn/go-ethlibs v0.0.5
 	github.com/stretchr/testify v1.10.0
-	golang.org/x/sync v0.12.0
+	golang.org/x/sync v0.15.0
 )
 
 require (
@@ -21,9 +23,11 @@ require (
 	github.com/ethereum/c-kzg-4844 v1.0.3 // indirect
 	github.com/ethereum/go-verkle v0.2.2 // indirect
 	github.com/golang/mock v1.6.0 // indirect
+	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/websocket v1.5.3 // indirect
 	github.com/hashicorp/golang-lru v1.0.2 // indirect
 	github.com/holiman/uint256 v1.3.2 // indirect
+	github.com/justinwongcn/hamster v0.1.0 // indirect
 	github.com/mmcloughlin/addchain v0.4.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect

@@ -1,0 +1,154 @@
+### 缓存区块查询功能测试
+### 该文件用于测试基于hamster实现的区块缓存功能
+### 包括按区块号查询和按区块哈希查询的缓存版本
+
+### 1. 第一次按区块号获取区块（缓存未命中）
+### 预期：从以太坊节点获取数据，存入缓存
+GET http://localhost:8080/cached/blocks/12345?fullTx=false
+
+### 期望响应：
+### {
+###   "number": "0x3039",
+###   "hash": "0x...",
+###   "parentHash": "0x...",
+###   "miner": "0x...",
+###   "timestamp": "0x...",
+###   "gasLimit": "0x...",
+###   "gasUsed": "0x...",
+###   "transactions": [...],
+###   ...
+### }
+
+### 2. 立即再次按相同区块号获取区块（缓存命中）
+### 预期：从缓存返回数据，不访问以太坊节点
+GET http://localhost:8080/cached/blocks/12345?fullTx=false
+
+### 期望响应：
+### 应该与第一次请求返回完全相同的数据
+### 响应时间应该明显更快
+
+### 3. 获取包含完整交易信息的区块（不同的缓存键）
+### 预期：由于fullTx=true，这是一个新的缓存键，会从节点获取数据
+GET http://localhost:8080/cached/blocks/12345?fullTx=true
+
+### 期望响应：
+### {
+###   "number": "0x3039",
+###   "hash": "0x...",
+###   "transactions": [
+###     {
+###       "hash": "0x...",
+###       "from": "0x...",
+###       "to": "0x...",
+###       "value": "0x...",
+###       "gas": "0x...",
+###       "gasPrice": "0x...",
+###       ...
+###     },
+###     ...
+###   ],
+###   ...
+### }
+
+### 4. 再次获取包含完整交易信息的区块（缓存命中）
+### 预期：从缓存返回数据
+GET http://localhost:8080/cached/blocks/12345?fullTx=true
+
+### 5. 获取最新区块（动态区块号）
+### 预期：获取最新区块并缓存
+GET http://localhost:8080/cached/blocks/latest?fullTx=false
+
+### 6. 立即再次获取最新区块（缓存命中）
+### 预期：从缓存返回相同的区块数据
+GET http://localhost:8080/cached/blocks/latest?fullTx=false
+
+### 7. 按区块哈希获取区块（第一次，缓存未命中）
+### 注意：需要使用实际存在的区块哈希
+### 这里使用一个示例哈希，实际测试时需要替换为真实的区块哈希
+GET http://localhost:8080/cached/blocks/hash/0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef?fullTx=false
+
+### 期望响应：
+### {
+###   "number": "0x...",
+###   "hash": "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef",
+###   "parentHash": "0x...",
+###   ...
+### }
+
+### 8. 立即再次按相同哈希获取区块（缓存命中）
+### 预期：从缓存返回数据
+GET http://localhost:8080/cached/blocks/hash/0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef?fullTx=false
+
+### 9. 测试哈希格式规范化（大写转小写，添加0x前缀）
+### 预期：应该能正确处理不同格式的哈希
+GET http://localhost:8080/cached/blocks/hash/1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF1234567890ABCDEF?fullTx=false
+
+### 10. 测试错误处理 - 无效区块号
+### 预期：返回400错误
+GET http://localhost:8080/cached/blocks/invalid_number
+
+### 期望响应：
+### {
+###   "error": "获取区块失败: ..."
+### }
+
+### 11. 测试错误处理 - 无效区块哈希
+### 预期：返回400或500错误
+GET http://localhost:8080/cached/blocks/hash/invalid_hash
+
+### 12. 测试缓存过期（需要等待3分钟后执行）
+### 注意：根据配置，主缓存过期时间为3分钟
+### 等待3分钟后再次请求，应该重新从节点获取数据
+### GET http://localhost:8080/cached/blocks/12345?fullTx=false
+
+### 13. 性能对比测试 - 原始端点（无缓存）
+### 用于对比缓存版本的性能提升
+GET http://localhost:8080/blocks/12345?fullTx=false
+
+### 14. 性能对比测试 - 缓存端点
+### 应该比原始端点响应更快
+GET http://localhost:8080/cached/blocks/12345?fullTx=false
+
+### 15. 并发测试准备 - 获取一个新的区块号
+### 用于测试SingleFlight机制
+GET http://localhost:8080/cached/blocks/12346?fullTx=false
+
+### 16. 模拟并发请求1（需要在缓存过期后同时执行）
+### 重要：要测试SingleFlight机制，需要在缓存过期后立即同时发起多个请求
+### 在实际场景中，当缓存过期时，多个并发请求只会有一个实际去加载数据
+GET http://localhost:8080/cached/blocks/12347?fullTx=false
+
+### 17. 模拟并发请求2
+GET http://localhost:8080/cached/blocks/12347?fullTx=false
+
+### 18. 模拟并发请求3
+GET http://localhost:8080/cached/blocks/12347?fullTx=false
+
+### 测试说明：
+### 1. 缓存功能验证：
+###    - 第一次请求应该从以太坊节点获取数据
+###    - 后续相同请求应该从缓存返回数据，响应时间更快
+###    - 不同的fullTx参数会创建不同的缓存键
+###
+### 2. 缓存过期验证：
+###    - 主缓存过期时间为3分钟
+###    - 过期后的请求会重新从节点获取数据
+###
+### 3. SingleFlight机制验证：
+###    - 多个并发请求同一个未缓存的区块时
+###    - 只有一个请求会实际访问以太坊节点
+###    - 其他请求会等待并共享结果
+###
+### 4. 错误处理验证：
+###    - 无效的区块号或哈希应该返回适当的错误信息
+###    - 网络错误或节点错误应该被正确处理
+###
+### 5. 性能提升验证：
+###    - 缓存版本的响应时间应该明显快于原始版本
+###    - 特别是在重复请求相同区块时
+
+### 注意事项：
+### 1. 测试前确保以太坊节点正常运行
+### 2. 某些测试需要使用真实存在的区块号和哈希
+### 3. 并发测试需要使用支持并发请求的HTTP客户端
+### 4. 缓存过期测试需要等待相应的时间间隔

@@ -7,6 +7,7 @@ import (
 	"github.com/justinwongcn/ant"
 	"github.com/justinwongcn/etherscan/api/handler"
 	"github.com/justinwongcn/etherscan/application/service"
+	"github.com/justinwongcn/go-ethlibs/eth"
 )
 
 // MockAccountRepository 是AccountRepository的模拟实现
@@ -41,12 +42,12 @@ func (m *MockAccountRepository) GetBalances(ctx context.Context, addresses []str
 
 // MockBlockRepository 是BlockRepository的模拟实现
 type MockBlockRepository struct {
-	blocks map[string]map[string]any
+	blocks map[string]*eth.Block
 }
 
 func NewMockBlockRepository() *MockBlockRepository {
 	return &MockBlockRepository{
-		blocks: make(map[string]map[string]any),
+		blocks: make(map[string]*eth.Block),
 	}
 }
 
@@ -54,14 +55,14 @@ func (m *MockBlockRepository) GetLatestBlockNumber(ctx context.Context) (uint64,
 	return 12345, nil
 }
 
-func (m *MockBlockRepository) GetBlockByHash(ctx context.Context, hash string, fullTx bool) (map[string]any, error) {
+func (m *MockBlockRepository) GetBlockByHash(ctx context.Context, hash string, fullTx bool) (*eth.Block, error) {
 	if block, exists := m.blocks[hash]; exists {
 		return block, nil
 	}
 	return nil, nil
 }
 
-func (m *MockBlockRepository) GetBlockByNumber(ctx context.Context, number string, fullTx bool) (map[string]any, error) {
+func (m *MockBlockRepository) GetBlockByNumber(ctx context.Context, number string, fullTx bool) (*eth.Block, error) {
 	if block, exists := m.blocks[number]; exists {
 		return block, nil
 	}
@@ -141,7 +142,8 @@ func TestRegisterRoutes(t *testing.T) {
 	server := ant.NewHTTPServer()
 
 	// 注册路由
-	RegisterRoutes(server, blockHandler, transactionHandler, accountHandler)
+	mockBlockRepo := NewMockBlockRepository()
+	RegisterRoutes(server, blockHandler, transactionHandler, accountHandler, mockBlockRepo)
 
 	// 验证服务器不为nil
 	if server == nil {
@@ -165,7 +167,8 @@ func TestRegisterRoutes_NilHandlers(t *testing.T) {
 	}()
 
 	// 传入nil handler
-	RegisterRoutes(server, nil, nil, nil)
+	mockBlockRepo := NewMockBlockRepository()
+	RegisterRoutes(server, nil, nil, nil, mockBlockRepo)
 
 	t.Log("nil handler测试通过")
 }
@@ -191,7 +194,8 @@ func TestRegisterRoutes_EmptyServer(t *testing.T) {
 	transactionHandler := handler.NewTransactionHandler(transactionService)
 
 	// 传入nil server，应该panic
-	RegisterRoutes(server, blockHandler, transactionHandler, accountHandler)
+	mockBlockRepo := NewMockBlockRepository()
+	RegisterRoutes(server, blockHandler, transactionHandler, accountHandler, mockBlockRepo)
 }
 
 func TestRoutePatterns(t *testing.T) {
@@ -283,6 +287,7 @@ func BenchmarkRegisterRoutes(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		server := ant.NewHTTPServer()
-		RegisterRoutes(server, blockHandler, transactionHandler, accountHandler)
+		mockBlockRepo := NewMockBlockRepository()
+		RegisterRoutes(server, blockHandler, transactionHandler, accountHandler, mockBlockRepo)
 	}
 }

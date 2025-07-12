@@ -40,7 +40,7 @@ func setupServer(rpcURL string) (*ant.HTTPServer, error) {
 	server := ant.NewHTTPServer()
 
 	// 注册路由
-	routes.RegisterRoutes(server, blockHandler, transactionHandler, accountHandler)
+	routes.RegisterRoutes(server, blockHandler, transactionHandler, accountHandler, blockRepo)
 
 	return server, nil
 }
